@@ -15,31 +15,25 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
-import GObject from 'gi://GObject'
 import Gio from 'gi://Gio'
+import GLib from 'gi://GLib'
+import GObject from 'gi://GObject'
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js'
 
 import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js'
 import { QuickToggle, QuickMenuToggle, SystemIndicator } from 'resource:///org/gnome/shell/ui/quickSettings.js'
-import { PopupMenuSection, PopupSeparatorMenuItem } from 'resource:///org/gnome/shell/ui/popupMenu.js'
+import { PopupMenuSection } from 'resource:///org/gnome/shell/ui/popupMenu.js'
 
 
-// gdbus call --session --dest=org.gnome.Mutter.DisplayConfig --object-path /org/gnome/Mutter/DisplayConfig --method org.gnome.Mutter.DisplayConfig.GetResources
+// import { loadInterfaceXML } from 'resource:///org/gnome/shell/misc/dbusUtils.js'
+// const displayConfigInterface = loadInterfaceXML('org.gnome.Mutter.DisplayConfig')
 
 const displayConfigInterface = `
 <!DOCTYPE node PUBLIC
 '-//freedesktop//DTD D-BUS Object Introspection 1.0//EN'
 'http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd'>
 <node>
-    <!--
-        org.gnome.Mutter.DisplayConfig:
-        @short_description: display configuration interface
-
-        This interface is used by mutter and gnome-settings-daemon
-        to apply multiple monitor configuration.
-    -->
-
     <interface name="org.gnome.Mutter.DisplayConfig">
     <method name="GetResources">
         <arg name="serial" direction="out" type="u" />
@@ -126,9 +120,41 @@ class ExampleToggle extends QuickToggle {
 
 const ExampleMenuToggle = GObject.registerClass(
 class ExampleMenuToggle extends QuickMenuToggle {
-    addEntries = (displayNames) => {
-        for (const displayName of displayNames) {
-            this._itemsSection.addAction(_(displayName), () => console.debug(displayName))
+    addEntries = (displays, proxy) => {
+        for (const display of displays) {
+            let label = display.outputName + " " + display.modelName + " " + display.mode
+
+            if (display.enabled) {
+                label += " ✔"
+            }
+
+            this._itemsSection.addAction(_(label), () => {
+                console.debug(display)
+
+                // gdbus call --session \
+                //     --dest=org.gnome.Mutter.DisplayConfig \
+                //     --object-path /org/gnome/Mutter/DisplayConfig \
+                //     --method org.gnome.Mutter.DisplayConfig.ApplyMonitorsConfig \
+                //     17 1 "[(0, 0, 1, 0, true, [('DP-2', '2560x1440@59.951', [] )] )]" "[]"
+
+                proxy.ApplyMonitorsConfigAsync(
+                    display.serial,
+                    1,  // method
+                    [
+                        [
+                            0,
+                            0,
+                            1.0,  // scale
+                            0,    // transform
+                            display.isPrimary,
+                            [
+                                [ display.outputName, display.mode, { } ]
+                            ]
+                        ]
+                    ],  // logicalMonitors
+                    {}  // properties
+                )
+            })
         }
     }
 
@@ -147,6 +173,8 @@ const ExampleIndicator = GObject.registerClass(
 class ExampleIndicator extends SystemIndicator {
     async _readDisplays() {
         console.log("[toggle-displays] Reading configuration of displays...")
+
+        // gdbus call --session --dest=org.gnome.Mutter.DisplayConfig --object-path /org/gnome/Mutter/DisplayConfig --method org.gnome.Mutter.DisplayConfig.GetResources
 
         const TestProxy = Gio.DBusProxy.makeProxyWrapper(displayConfigInterface)
 
@@ -170,19 +198,51 @@ class ExampleIndicator extends SystemIndicator {
             console.debug(error)
         }
 
-        const results = await proxy.GetResourcesAsync()
+        this._proxy = proxy
 
-        console.log("[toggle-displays] Results", results)
 
-        const [serial, crtcs, outputs, modes] = results
+        // Get display resources
 
-        let displays = []
+        const displayResources = await proxy.GetResourcesAsync()
+
+        console.log("[toggle-displays] Display resources", displayResources)
+
+        const [rawSerial, crtcs, outputs, modes] = displayResources
+
+
+        // Get display current state
+
+        const currentState = await proxy.GetCurrentStateAsync()
+
+        console.log("[toggle-displays] Current displays state", currentState)
+
+        const [_rawSerial, monitors, logicalMonitors, _properties] = currentState
+
+
+        let resources = []
 
         for (const output of outputs) {
             const outputName = output[4]
             const modelName = output[7].product.unpack()
 
-            displays.push(modelName)
+            resources.push({
+                "outputName": outputName,
+                "modelName": modelName,
+                "enabled": true
+            })
+        }
+
+        let displays = []
+
+        for (const monitor of monitors) {
+            const outputName = monitor[0][0]
+            const modelName = monitor[0][2]
+            const mode = monitor[1][0][0]
+            const enabled = true
+            const isPrimary = true
+            const serial = parseInt(rawSerial)
+
+            displays.push({ outputName, modelName, mode, enabled, serial, isPrimary })
         }
 
         this._displays = displays
@@ -202,7 +262,7 @@ class ExampleIndicator extends SystemIndicator {
         this.quickSettingsItems.push(this._menu)
 
         this._readDisplays().then(() => {
-            this._menu.addEntries(this._displays)
+            this._menu.addEntries(this._displays, this._proxy)
         })
 
         console.log("[toggle-displays] Done starting extension")
