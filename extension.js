@@ -128,32 +128,30 @@ class ExampleMenuToggle extends QuickMenuToggle {
                 label += " ✔"
             }
 
-            this._itemsSection.addAction(_(label), () => {
+            this._itemsSection.addAction(_(label), async () => {
                 console.debug(display)
 
                 // gdbus call --session \
                 //     --dest=org.gnome.Mutter.DisplayConfig \
                 //     --object-path /org/gnome/Mutter/DisplayConfig \
                 //     --method org.gnome.Mutter.DisplayConfig.ApplyMonitorsConfig \
-                //     17 1 "[(0, 0, 1, 0, true, [('DP-2', '2560x1440@59.951', [] )] )]" "[]"
+                //     17 1 "[(0, 240, 1.0, 0, false, [('DP-1', '1920x1200@59.950', [])]), (1920, 0, 1.0, 0, true, [('DP-2', '2560x1440@59.951', [])]), (4480, 390, 1.0, 0, false, [('HDMI-2', '1680x1050@59.954', [])])]" "[]"
 
-                proxy.ApplyMonitorsConfigAsync(
-                    display.serial,
-                    1,  // method
-                    [
-                        [
-                            0,
-                            0,
-                            1.0,  // scale
-                            0,    // transform
-                            display.isPrimary,
-                            [
-                                [ display.outputName, display.mode, { } ]
-                            ]
-                        ]
-                    ],  // logicalMonitors
-                    {}  // properties
-                )
+                const method = 1
+                let logicalMonitors = []
+                const properties = { }
+
+                for (const display of displays) {
+                    logicalMonitors.push([
+                        display.x, display.y, 1.0, 0, display.isPrimary, [[ display.outputName, display.mode, { } ]]
+                    ])
+                }
+
+                const [rawSerial, _crtcs, _outputs, _modes] = await proxy.GetResourcesAsync()
+
+                const serial = parseInt(rawSerial)
+
+                proxy.ApplyMonitorsConfigAsync(serial, method, logicalMonitors, properties)
             })
         }
     }
@@ -202,20 +200,14 @@ class ExampleIndicator extends SystemIndicator {
 
 
         // Get display resources
-
         const displayResources = await proxy.GetResourcesAsync()
-
         console.log("[toggle-displays] Display resources", displayResources)
-
         const [rawSerial, crtcs, outputs, modes] = displayResources
 
 
         // Get display current state
-
         const currentState = await proxy.GetCurrentStateAsync()
-
         console.log("[toggle-displays] Current displays state", currentState)
-
         const [_rawSerial, monitors, logicalMonitors, _properties] = currentState
 
 
@@ -234,15 +226,69 @@ class ExampleIndicator extends SystemIndicator {
 
         let displays = []
 
-        for (const monitor of monitors) {
-            const outputName = monitor[0][0]
-            const modelName = monitor[0][2]
-            const mode = monitor[1][0][0]
-            const enabled = true
-            const isPrimary = true
-            const serial = parseInt(rawSerial)
+        if (resources.length == 1) {
+            for (const monitor of monitors) {
+                const outputName = monitor[0][0]
+                const modelName = monitor[0][2]
+                const mode = monitor[1][0][0]
+                const enabled = true
+                let isPrimary = false
 
-            displays.push({ outputName, modelName, mode, enabled, serial, isPrimary })
+                let x = 0
+                let y = 0
+
+                // if (modelName == "EV2436W") { 
+                //     x = 0
+                //     y = 240
+                // }
+
+                // if (modelName == "DELL U2711") {
+                //     x = 1920
+                //     y = 0
+                //     isPrimary = true
+                // }
+
+                // if (modelName == "DELL 2209WA") {
+                //     x = 4480
+                //     y = 390
+                // }
+
+                if (modelName == "MetaMonitor") {
+                    isPrimary = true
+                }
+
+                displays.push({ outputName, x, y, isPrimary, mode, modelName, enabled })
+            }
+        } else {
+            displays.push({
+                outputName: "DP-1",
+                x: 0,
+                y: 240,
+                isPrimary: false,
+                mode: "1920x1200@59.950",
+                modelName: "EV2436W",
+                enabled: false
+            })
+
+            displays.push({
+                outputName: "DP-2",
+                x: 1920,
+                y: 0,
+                isPrimary: true,
+                mode: "2560x1440@59.951",
+                modelName: "DELL U2711",
+                enabled: true
+            })
+
+            displays.push({
+                outputName: "HDMI-2",
+                x: 4480,
+                y: 390,
+                isPrimary: false,
+                mode: "1680x1050@59.954",
+                modelName: "DELL 2209WA",
+                enabled: false
+            })
         }
 
         this._displays = displays
