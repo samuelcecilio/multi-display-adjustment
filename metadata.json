@@ -1,0 +1,8 @@
+{
+  "name": "toggle-displays",
+  "description": "Turn displays on and off",
+  "uuid": "toggle-displays@w8jcik.gitlab.com",
+  "shell-version": [
+    "46"
+  ]
+}
