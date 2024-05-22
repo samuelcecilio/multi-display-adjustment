@@ -137,21 +137,28 @@ class ExampleMenuToggle extends QuickMenuToggle {
                 //     --method org.gnome.Mutter.DisplayConfig.ApplyMonitorsConfig \
                 //     17 1 "[(0, 240, 1.0, 0, false, [('DP-1', '1920x1200@59.950', [])]), (1920, 0, 1.0, 0, true, [('DP-2', '2560x1440@59.951', [])]), (4480, 390, 1.0, 0, false, [('HDMI-2', '1680x1050@59.954', [])])]" "[]"
 
+                display.enabled = !display.enabled
+
                 const method = 1
                 let logicalMonitors = []
                 const properties = { }
 
+                let disabledX = 0
+
                 for (const display of displays) {
+                    if (!display.enabled) {
+                        disabledX += display.width
+                        continue
+                    }
+
                     logicalMonitors.push([
-                        display.x, display.y, 1.0, 0, display.isPrimary, [[ display.outputName, display.mode, { } ]]
+                        display.x - disabledX, display.y, 1.0, 0, display.isPrimary, [[ display.outputName, display.mode, { } ]]
                     ])
                 }
 
                 const [rawSerial, _crtcs, _outputs, _modes] = await proxy.GetResourcesAsync()
 
-                const serial = parseInt(rawSerial)
-
-                proxy.ApplyMonitorsConfigAsync(serial, method, logicalMonitors, properties)
+                proxy.ApplyMonitorsConfigAsync(parseInt(rawSerial), method, logicalMonitors, properties)
             })
         }
     }
@@ -264,6 +271,8 @@ class ExampleIndicator extends SystemIndicator {
                 outputName: "DP-1",
                 x: 0,
                 y: 240,
+                width: 1920,
+                height: 1200,
                 isPrimary: false,
                 mode: "1920x1200@59.950",
                 modelName: "EV2436W",
@@ -274,6 +283,8 @@ class ExampleIndicator extends SystemIndicator {
                 outputName: "DP-2",
                 x: 1920,
                 y: 0,
+                width: 2560,
+                height: 1440,
                 isPrimary: true,
                 mode: "2560x1440@59.951",
                 modelName: "DELL U2711",
@@ -284,6 +295,8 @@ class ExampleIndicator extends SystemIndicator {
                 outputName: "HDMI-2",
                 x: 4480,
                 y: 390,
+                width: 1680,
+                height: 1050,
                 isPrimary: false,
                 mode: "1680x1050@59.954",
                 modelName: "DELL 2209WA",
