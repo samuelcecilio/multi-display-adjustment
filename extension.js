@@ -23,7 +23,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js'
 
 import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js'
 import { QuickToggle, QuickMenuToggle, SystemIndicator } from 'resource:///org/gnome/shell/ui/quickSettings.js'
-import { PopupMenuSection } from 'resource:///org/gnome/shell/ui/popupMenu.js'
+import { PopupMenuSection, PopupSeparatorMenuItem } from 'resource:///org/gnome/shell/ui/popupMenu.js'
 
 
 const areSetsEqual = (a, b) => a.size === b.size && [...a].every(value => b.has(value))
@@ -124,7 +124,7 @@ class ExampleToggle extends QuickToggle {
 const ExampleMenuToggle = GObject.registerClass(
 class ExampleMenuToggle extends QuickMenuToggle {
     refreshEntries = (displays, proxy) => {
-        let menu = this
+        const menu = this
 
         this._itemsSection.removeAll()
 
@@ -167,7 +167,7 @@ class ExampleMenuToggle extends QuickMenuToggle {
 
                 proxy.ApplyMonitorsConfigAsync(parseInt(rawSerial), method, logicalMonitors, properties)
 
-                // menu.refreshEntries(displays, proxy)
+                menu.refreshEntries(displays, proxy)
             })
         }
     }
@@ -194,6 +194,8 @@ class ExampleMenuToggle extends QuickMenuToggle {
 const ExampleIndicator = GObject.registerClass(
 class ExampleIndicator extends SystemIndicator {
     async _initProxy() {
+        log("[toggle-displays] Initializing DBus proxy...")
+
         const TestProxy = Gio.DBusProxy.makeProxyWrapper(displayConfigInterface)
 
         let proxy
@@ -212,6 +214,8 @@ class ExampleIndicator extends SystemIndicator {
                     null, Gio.DBusProxyFlags.NONE
                 )
             })
+
+            log("[toggle-displays] DBus proxy is ready")
         } catch (error) {
             console.debug(error)
         }
@@ -219,116 +223,8 @@ class ExampleIndicator extends SystemIndicator {
         return proxy
     }
 
-    async _readDisplays() {
-        console.log("[toggle-displays] Reading configuration of displays...")
-
-        // gdbus call --session --dest=org.gnome.Mutter.DisplayConfig --object-path /org/gnome/Mutter/DisplayConfig --method org.gnome.Mutter.DisplayConfig.GetResources
-
-        // Get display resources
-        const displayResources = await proxy.GetResourcesAsync()
-        // console.log("[toggle-displays] Display resources", displayResources)
-        const [rawSerial, crtcs, outputs, modes] = displayResources
-
-
-        // Get display current state
-        const currentState = await proxy.GetCurrentStateAsync()
-        // console.log("[toggle-displays] Current displays state", currentState)
-        const [_rawSerial, monitors, logicalMonitors, _properties] = currentState
-
-
-        let resources = []
-
-        for (const output of outputs) {
-            const outputName = output[4]
-            const modelName = output[7].product.unpack()
-
-            resources.push({
-                "outputName": outputName,
-                "modelName": modelName,
-                "enabled": true
-            })
-        }
-
-        let displays = []
-
-        if (resources.length == 1) {
-            for (const monitor of monitors) {
-                const outputName = monitor[0][0]
-                const modelName = monitor[0][2]
-                const mode = monitor[1][0][0]
-                const enabled = true
-                let isPrimary = false
-
-                let x = 0
-                let y = 0
-                const width = 1366
-                const height = 768
-
-                // if (modelName == "EV2436W") { 
-                //     x = 0
-                //     y = 240
-                // }
-
-                // if (modelName == "DELL U2711") {
-                //     x = 1920
-                //     y = 0
-                //     isPrimary = true
-                // }
-
-                // if (modelName == "DELL 2209WA") {
-                //     x = 4480
-                //     y = 390
-                // }
-
-                if (modelName == "MetaMonitor") {
-                    isPrimary = true
-                }
-
-                displays.push({ outputName, x, y, width, height, isPrimary, mode, modelName, enabled })
-            }
-        } else {
-            displays.push({
-                outputName: "DP-1",
-                x: 0,
-                y: 240,
-                width: 1920,
-                height: 1200,
-                isPrimary: false,
-                mode: "1920x1200@59.950",
-                modelName: "EV2436W",
-                enabled: false
-            })
-
-            displays.push({
-                outputName: "DP-2",
-                x: 1920,
-                y: 0,
-                width: 2560,
-                height: 1440,
-                isPrimary: true,
-                mode: "2560x1440@59.951",
-                modelName: "DELL U2711",
-                enabled: true
-            })
-
-            displays.push({
-                outputName: "HDMI-2",
-                x: 4480,
-                y: 390,
-                width: 1680,
-                height: 1050,
-                isPrimary: false,
-                mode: "1680x1050@59.954",
-                modelName: "DELL 2209WA",
-                enabled: false
-            })
-        }
-
-        this._displays = displays
-    }
-
     async _getCurrentConnectors(proxy) {
-        console.log("[toggle-displays] Reading configuration of displays...")
+        log("[toggle-displays] Retrieving connectors...")
 
         // gdbus call --session --dest=org.gnome.Mutter.DisplayConfig --object-path /org/gnome/Mutter/DisplayConfig --method org.gnome.Mutter.DisplayConfig.GetResources
 
@@ -343,28 +239,34 @@ class ExampleIndicator extends SystemIndicator {
             }
         }
 
+        log("[toggle-displays] Got connectors", outputNames)
+
         return outputNames
     }
 
     async _getMonitorConfig() {
+        log("[toggle-displays] Retrieving monitor config...")
+
         Gio._promisify(Gio.Subprocess.prototype, 'communicate_utf8_async')
 
         // let rawMonitorsConfig = GLib.file_get_contents(GLib.get_home_dir() + '/.config/monitors.xml').toString()
 
         const proc = Gio.Subprocess.new(['python3', GLib.get_home_dir() + '/.local/share/gnome-shell/extensions/toggle-displays@w8jcik.gitlab.com/parse-monitors-config.py'],
-                Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE);
-        const [stdout, stderr] = await proc.communicate_utf8_async(null, null);
+                Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE)
+        const [stdout, stderr] = await proc.communicate_utf8_async(null, null)
 
         if (!proc.get_successful()) {
-            throw new Error(stderr);
+            throw new Error(stderr)
         }
+
+        log("[toggle-displays] Retrieved monitor config", stdout)
 
         return stdout
     }
 
     sortPreset(preset) {
         return Object.fromEntries(
-            Object.entries(preset).sort(([,a],[,b]) => a.x - b.x)
+            Object.entries(preset).sort(([, a],[, b]) => a.x - b.x)
         )
     }
 
@@ -383,10 +285,6 @@ class ExampleIndicator extends SystemIndicator {
 
             this._displays = []
         })
-
-        // this._readDisplays().then(() => {
-        //     this._menu.refreshEntries(this._displays, this._proxy)
-        // })
     }
 
     constructor() {
@@ -400,6 +298,8 @@ class ExampleIndicator extends SystemIndicator {
         this._menu = new ExampleMenuToggle()
         this._menu._itemsSection = new PopupMenuSection()
         this._menu.menu.addMenuItem(this._menu._itemsSection)
+        this._menu.menu.addMenuItem(new PopupSeparatorMenuItem())
+        this._menu.menu.addSettingsAction(_('Display Settings'), 'gnome-display-panel.desktop')
         this.quickSettingsItems.push(this._menu)
 
         this._setup()
@@ -418,6 +318,6 @@ export default class QuickSettingsExampleExtension extends Extension {
         this._indicator.quickSettingsItems.forEach(item => item.destroy())
         this._indicator.destroy()
 
-        // this._menu.destroy()
+        this._menu.destroy()
     }
 }
