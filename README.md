@@ -16,6 +16,8 @@ export G_MESSAGES_DEBUG="GNOME Shell"
 dbus-run-session -- gnome-shell --nested
 ```
 
+When using `log`, messages are visible in `journalctl -xf`.
+
 # Test interface
 
 ```bash
