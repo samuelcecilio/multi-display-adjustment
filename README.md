@@ -15,3 +15,19 @@ export G_MESSAGES_DEBUG="GNOME Shell"
 
 dbus-run-session -- gnome-shell --nested
 ```
+
+# Test interface
+
+```bash
+serial=$(gdbus call --session --dest=org.gnome.Mutter.DisplayConfig --object-path /org/gnome/Mutter/DisplayConfig --method org.gnome.Mutter.DisplayConfig.GetResources | awk ' { print $2 }' | grep -oE [0-9]+)
+
+# ('DP-1', '1920x1200@59.950', [])
+# ('DP-2', '2560x1440@59.951', [])
+# ('HDMI-2', '1680x1050@59.954', [])
+
+gdbus call --session \
+    --dest=org.gnome.Mutter.DisplayConfig \
+    --object-path /org/gnome/Mutter/DisplayConfig \
+    --method org.gnome.Mutter.DisplayConfig.ApplyMonitorsConfig \
+    ${serial} 1 "[(0, 240, 1.0, 0, false, [('DP-1', '1920x1200@59.950', [])]), (1920, 0, 1.0, 0, true, [('DP-2', '2560x1440@59.951', [])]), (4480, 390, 1.0, 0, false, [('HDMI-2', '1680x1050@59.954', [])])]" "[]"
+```
