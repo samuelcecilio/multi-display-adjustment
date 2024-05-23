@@ -26,7 +26,7 @@ import { QuickToggle, QuickMenuToggle, SystemIndicator } from 'resource:///org/g
 import { PopupMenuSection } from 'resource:///org/gnome/shell/ui/popupMenu.js'
 
 
-// import { loadInterfaceXML } from 'resource:///org/gnome/shell/misc/dbusUtils.js'
+// import { loadInterfaceXML } from 'resource:///org/gnome/shell/misc/fileUtils.js'
 // const displayConfigInterface = loadInterfaceXML('org.gnome.Mutter.DisplayConfig')
 
 const displayConfigInterface = `
@@ -178,6 +178,14 @@ class ExampleMenuToggle extends QuickMenuToggle {
         })
 
         this.menu.setHeader('video-display-symbolic', _('Displays'))
+
+        this.connect('clicked', () => {
+            if (this.checked) {
+                console.log("[toggle-displays] Displays enabled")
+            } else {
+                console.log("[toggle-displays] Displays disabled")
+            }
+        })
     }
 });
 
@@ -335,7 +343,7 @@ class ExampleIndicator extends SystemIndicator {
 
         console.log("[toggle-displays] Done starting extension")
     }
-});
+})
 
 export default class QuickSettingsExampleExtension extends Extension {
     enable() {
