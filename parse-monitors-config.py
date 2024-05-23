@@ -51,11 +51,13 @@ def parsePresets(configuration):
             if entry.tag == 'logicalmonitor':
                 logical_monitor = entry
                 display = parse_display(logical_monitor)
-                displays[display["connector"]] = display
+                key = display["model"] + "@" + display["connector"]
+                displays[key] = display
             elif entry.tag == 'disabled':
                 for monitor_spec in entry:
                     disabled_display = parse_disabled_display(monitor_spec)
-                    displays[disabled_display["connector"]] = disabled_display
+                    key = disabled_display["model"] + "@" + disabled_display["connector"]
+                    displays[key] = disabled_display
 
         presets.append(displays)
 
