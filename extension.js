@@ -26,6 +26,9 @@ import { QuickToggle, QuickMenuToggle, SystemIndicator } from 'resource:///org/g
 import { PopupMenuSection } from 'resource:///org/gnome/shell/ui/popupMenu.js'
 
 
+const areSetsEqual = (a, b) => a.size === b.size && [...a].every(value => b.has(value))
+
+
 // import { loadInterfaceXML } from 'resource:///org/gnome/shell/misc/fileUtils.js'
 // const displayConfigInterface = loadInterfaceXML('org.gnome.Mutter.DisplayConfig')
 
@@ -125,17 +128,14 @@ class ExampleMenuToggle extends QuickMenuToggle {
 
         this._itemsSection.removeAll()
 
-        for (const display of displays) {
-            // let label = display.outputName + " " + display.modelName + " " + display.mode
-            let label = display.modelName
+        for (const [key, display] of Object.entries(displays)) {
+            let label = display.model
 
             if (display.enabled) {
                 label += " ✔"
             }
 
             this._itemsSection.addAction(_(label), async () => {
-                console.debug(display)
-
                 // gdbus call --session \
                 //     --dest=org.gnome.Mutter.DisplayConfig \
                 //     --object-path /org/gnome/Mutter/DisplayConfig \
@@ -150,22 +150,24 @@ class ExampleMenuToggle extends QuickMenuToggle {
 
                 let disabledX = 0
 
-                for (const display of displays) {
+                for (const [key, display] of Object.entries(displays)) {
                     if (!display.enabled) {
                         disabledX += display.width
                         continue
                     }
 
                     logicalMonitors.push([
-                        display.x - disabledX, display.y, 1.0, 0, display.isPrimary, [[ display.outputName, display.mode, { } ]]
+                        display.x - disabledX, display.y, 1.0, 0, display.primary, [[ display.connector, '' + display.width + 'x' + display.height + '@' + display.rawRate, { } ]]
                     ])
                 }
+
+                log(logicalMonitors)
 
                 const [rawSerial, _crtcs, _outputs, _modes] = await proxy.GetResourcesAsync()
 
                 proxy.ApplyMonitorsConfigAsync(parseInt(rawSerial), method, logicalMonitors, properties)
 
-                menu.refreshEntries(displays, proxy)
+                // menu.refreshEntries(displays, proxy)
             })
         }
     }
@@ -191,11 +193,7 @@ class ExampleMenuToggle extends QuickMenuToggle {
 
 const ExampleIndicator = GObject.registerClass(
 class ExampleIndicator extends SystemIndicator {
-    async _readDisplays() {
-        console.log("[toggle-displays] Reading configuration of displays...")
-
-        // gdbus call --session --dest=org.gnome.Mutter.DisplayConfig --object-path /org/gnome/Mutter/DisplayConfig --method org.gnome.Mutter.DisplayConfig.GetResources
-
+    async _initProxy() {
         const TestProxy = Gio.DBusProxy.makeProxyWrapper(displayConfigInterface)
 
         let proxy
@@ -218,8 +216,13 @@ class ExampleIndicator extends SystemIndicator {
             console.debug(error)
         }
 
-        this._proxy = proxy
+        return proxy
+    }
 
+    async _readDisplays() {
+        console.log("[toggle-displays] Reading configuration of displays...")
+
+        // gdbus call --session --dest=org.gnome.Mutter.DisplayConfig --object-path /org/gnome/Mutter/DisplayConfig --method org.gnome.Mutter.DisplayConfig.GetResources
 
         // Get display resources
         const displayResources = await proxy.GetResourcesAsync()
@@ -324,6 +327,68 @@ class ExampleIndicator extends SystemIndicator {
         this._displays = displays
     }
 
+    async _getCurrentConnectors(proxy) {
+        console.log("[toggle-displays] Reading configuration of displays...")
+
+        // gdbus call --session --dest=org.gnome.Mutter.DisplayConfig --object-path /org/gnome/Mutter/DisplayConfig --method org.gnome.Mutter.DisplayConfig.GetResources
+
+        const currentState = await proxy.GetCurrentStateAsync()
+        const logicalMonitors = currentState[2]
+
+        let outputNames = []
+
+        for (const logicalMonitor of logicalMonitors) {
+            for (const monitorSpec of logicalMonitor[5]) {
+                outputNames.push(monitorSpec[2] + "@" + monitorSpec[0])
+            }
+        }
+
+        return outputNames
+    }
+
+    async _getMonitorConfig() {
+        Gio._promisify(Gio.Subprocess.prototype, 'communicate_utf8_async')
+
+        // let rawMonitorsConfig = GLib.file_get_contents(GLib.get_home_dir() + '/.config/monitors.xml').toString()
+
+        const proc = Gio.Subprocess.new(['python3', GLib.get_home_dir() + '/.local/share/gnome-shell/extensions/toggle-displays@w8jcik.gitlab.com/parse-monitors-config.py'],
+                Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE);
+        const [stdout, stderr] = await proc.communicate_utf8_async(null, null);
+
+        if (!proc.get_successful()) {
+            throw new Error(stderr);
+        }
+
+        return stdout
+    }
+
+    sortPreset(preset) {
+        return Object.fromEntries(
+            Object.entries(preset).sort(([,a],[,b]) => a.x - b.x)
+        )
+    }
+
+    async _setup() {
+        this._proxy = await this._initProxy()
+        const outputNames = await this._getCurrentConnectors(this._proxy)
+
+        this._getMonitorConfig().then((rawPresets) => {
+            for (const preset of JSON.parse(rawPresets)["presets"]) {
+                if (areSetsEqual(new Set(Object.keys(preset)), new Set(outputNames))) {
+                    this._displays = this.sortPreset(preset)
+                    this._menu.refreshEntries(this._displays, this._proxy)
+                    break
+                }
+            }
+
+            this._displays = []
+        })
+
+        // this._readDisplays().then(() => {
+        //     this._menu.refreshEntries(this._displays, this._proxy)
+        // })
+    }
+
     constructor() {
         super();
 
@@ -337,9 +402,7 @@ class ExampleIndicator extends SystemIndicator {
         this._menu.menu.addMenuItem(this._menu._itemsSection)
         this.quickSettingsItems.push(this._menu)
 
-        this._readDisplays().then(() => {
-            this._menu.refreshEntries(this._displays, this._proxy)
-        })
+        this._setup()
 
         console.log("[toggle-displays] Done starting extension")
     }
@@ -355,6 +418,6 @@ export default class QuickSettingsExampleExtension extends Extension {
         this._indicator.quickSettingsItems.forEach(item => item.destroy())
         this._indicator.destroy()
 
-        this._menu.destroy()
+        // this._menu.destroy()
     }
 }
