@@ -120,9 +120,14 @@ class ExampleToggle extends QuickToggle {
 
 const ExampleMenuToggle = GObject.registerClass(
 class ExampleMenuToggle extends QuickMenuToggle {
-    addEntries = (displays, proxy) => {
+    refreshEntries = (displays, proxy) => {
+        let menu = this
+
+        this._itemsSection.removeAll()
+
         for (const display of displays) {
-            let label = display.outputName + " " + display.modelName + " " + display.mode
+            // let label = display.outputName + " " + display.modelName + " " + display.mode
+            let label = display.modelName
 
             if (display.enabled) {
                 label += " ✔"
@@ -159,6 +164,8 @@ class ExampleMenuToggle extends QuickMenuToggle {
                 const [rawSerial, _crtcs, _outputs, _modes] = await proxy.GetResourcesAsync()
 
                 proxy.ApplyMonitorsConfigAsync(parseInt(rawSerial), method, logicalMonitors, properties)
+
+                menu.refreshEntries(displays, proxy)
             })
         }
     }
@@ -208,13 +215,13 @@ class ExampleIndicator extends SystemIndicator {
 
         // Get display resources
         const displayResources = await proxy.GetResourcesAsync()
-        console.log("[toggle-displays] Display resources", displayResources)
+        // console.log("[toggle-displays] Display resources", displayResources)
         const [rawSerial, crtcs, outputs, modes] = displayResources
 
 
         // Get display current state
         const currentState = await proxy.GetCurrentStateAsync()
-        console.log("[toggle-displays] Current displays state", currentState)
+        // console.log("[toggle-displays] Current displays state", currentState)
         const [_rawSerial, monitors, logicalMonitors, _properties] = currentState
 
 
@@ -243,6 +250,8 @@ class ExampleIndicator extends SystemIndicator {
 
                 let x = 0
                 let y = 0
+                const width = 1366
+                const height = 768
 
                 // if (modelName == "EV2436W") { 
                 //     x = 0
@@ -264,7 +273,7 @@ class ExampleIndicator extends SystemIndicator {
                     isPrimary = true
                 }
 
-                displays.push({ outputName, x, y, isPrimary, mode, modelName, enabled })
+                displays.push({ outputName, x, y, width, height, isPrimary, mode, modelName, enabled })
             }
         } else {
             displays.push({
@@ -321,7 +330,7 @@ class ExampleIndicator extends SystemIndicator {
         this.quickSettingsItems.push(this._menu)
 
         this._readDisplays().then(() => {
-            this._menu.addEntries(this._displays, this._proxy)
+            this._menu.refreshEntries(this._displays, this._proxy)
         })
 
         console.log("[toggle-displays] Done starting extension")
