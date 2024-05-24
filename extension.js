@@ -361,7 +361,7 @@ export default class ExampleExtension extends Extension {
         this._indicator.destroy()
         this._indicator = null
 
-        this._menu.destroy()
-        this._menu = null
+        // this._menu.destroy()
+        // this._menu = null
     }
 }
