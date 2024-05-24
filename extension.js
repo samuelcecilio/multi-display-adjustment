@@ -131,6 +131,8 @@ class ExampleMenuToggle extends QuickMenuToggle {
         for (const [key, display] of Object.entries(displays)) {
             let label = display.model
 
+            // .setOrnament(display.enabled ? PopupMenu.Ornament.CHECK : PopupMenu.Ornament.NONE)
+
             if (display.enabled) {
                 label += " ✔"
             }
