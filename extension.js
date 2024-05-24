@@ -172,6 +172,51 @@ class ExampleMenuToggle extends QuickMenuToggle {
         }
     }
 
+    async setupToggleAction(displays, proxy) {
+        this.connect('clicked', async () => {
+            if (this.checked) {
+                console.log("[toggle-displays] Enabling extra displays")
+
+                for (const [key, display] of Object.entries(displays)) {
+                    display.enabled = true
+                }
+            } else {
+                console.log("[toggle-displays] Disabling extra displays")
+
+                for (const [key, display] of Object.entries(displays)) {
+                    if (!display.primary) {
+                        display.enabled = false
+                    }
+                }
+            }
+
+            const method = 1
+            let logicalMonitors = []
+            const properties = { }
+
+            let disabledX = 0
+
+            for (const [key, display] of Object.entries(displays)) {
+                if (!display.enabled) {
+                    disabledX += display.width
+                    continue
+                }
+
+                logicalMonitors.push([
+                    display.x - disabledX, display.y, 1.0, 0, display.primary, [[ display.connector, '' + display.width + 'x' + display.height + '@' + display.rawRate, { } ]]
+                ])
+            }
+
+            log(logicalMonitors)
+
+            const [rawSerial, _crtcs, _outputs, _modes] = await proxy.GetResourcesAsync()
+
+            proxy.ApplyMonitorsConfigAsync(parseInt(rawSerial), method, logicalMonitors, properties)
+
+            this.refreshEntries(displays, proxy)
+        })
+    }
+
     _init(extensionObject) {
         super._init({
             title: _('Displays'),
@@ -180,16 +225,8 @@ class ExampleMenuToggle extends QuickMenuToggle {
         })
 
         this.menu.setHeader('video-display-symbolic', _('Displays'))
-
-        this.connect('clicked', () => {
-            if (this.checked) {
-                console.log("[toggle-displays] Displays enabled")
-            } else {
-                console.log("[toggle-displays] Displays disabled")
-            }
-        })
     }
-});
+})
 
 const ExampleIndicator = GObject.registerClass(
 class ExampleIndicator extends SystemIndicator {
@@ -270,7 +307,7 @@ class ExampleIndicator extends SystemIndicator {
         )
     }
 
-    async _setup() {
+    async _setup(extensionObject) {
         this._proxy = await this._initProxy()
         const outputNames = await this._getCurrentConnectors(this._proxy)
 
@@ -279,6 +316,7 @@ class ExampleIndicator extends SystemIndicator {
                 if (areSetsEqual(new Set(Object.keys(preset)), new Set(outputNames))) {
                     this._displays = this.sortPreset(preset)
                     this._menu.refreshEntries(this._displays, this._proxy)
+                    this._menu.setupToggleAction(this._displays, this._proxy)
                     break
                 }
             }
@@ -287,37 +325,41 @@ class ExampleIndicator extends SystemIndicator {
         })
     }
 
-    constructor() {
-        super();
+    _init(extensionObject) {
+        super._init()
 
         console.log("[toggle-displays] Starting extension...")
 
         this._indicator = this._addIndicator()
         this._indicator.iconName = 'video-display-symbolic'
 
-        this._menu = new ExampleMenuToggle()
+        this._menu = new ExampleMenuToggle(extensionObject)
         this._menu._itemsSection = new PopupMenuSection()
         this._menu.menu.addMenuItem(this._menu._itemsSection)
         this._menu.menu.addMenuItem(new PopupSeparatorMenuItem())
         this._menu.menu.addSettingsAction(_('Display Settings'), 'gnome-display-panel.desktop')
         this.quickSettingsItems.push(this._menu)
 
-        this._setup()
+        this._setup(extensionObject)
 
         console.log("[toggle-displays] Done starting extension")
     }
 })
 
-export default class QuickSettingsExampleExtension extends Extension {
+export default class ExampleExtension extends Extension {
     enable() {
-        this._indicator = new ExampleIndicator()
+        this._indicator = new ExampleIndicator(this)
+
         Main.panel.statusArea.quickSettings.addExternalIndicator(this._indicator)
     }
 
     disable() {
         this._indicator.quickSettingsItems.forEach(item => item.destroy())
+
         this._indicator.destroy()
+        this._indicator = null
 
         this._menu.destroy()
+        this._menu = null
     }
 }
