@@ -22,11 +22,10 @@ import GObject from 'gi://GObject'
 import * as Main from 'resource:///org/gnome/shell/ui/main.js'
 
 import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js'
-import { QuickToggle, QuickMenuToggle, SystemIndicator } from 'resource:///org/gnome/shell/ui/quickSettings.js'
+import { QuickMenuToggle, SystemIndicator } from 'resource:///org/gnome/shell/ui/quickSettings.js'
 import { PopupMenuSection, PopupSeparatorMenuItem } from 'resource:///org/gnome/shell/ui/popupMenu.js'
 
-
-const areSetsEqual = (a, b) => a.size === b.size && [...a].every(value => b.has(value))
+import { areSetsEqual, getPossibleBoolean } from './code-convenience.js'
 
 
 // import { loadInterfaceXML } from 'resource:///org/gnome/shell/misc/fileUtils.js'
@@ -109,25 +108,6 @@ const displayConfigInterface = `
     </interface>
 </node>`
 
-
-function getPossibleBoolean(variable, _property) {
-    if (_property in variable) {
-        return variable[_property].get_boolean()
-    }
-
-    return false
-}
-
-const ExampleToggle = GObject.registerClass(
-class ExampleToggle extends QuickToggle {
-    constructor() {
-        super({
-            title: _('Smile'),
-            iconName: 'face-smile-symbolic',
-            toggleMode: true
-        })
-    }
-})
 
 const ExampleMenuToggle = GObject.registerClass(
 class ExampleMenuToggle extends QuickMenuToggle {
@@ -245,13 +225,34 @@ class ExampleMenuToggle extends QuickMenuToggle {
         })
 
         this.menu.setHeader('video-display-symbolic', _('Displays'))
+
+        this._itemsSection = new PopupMenuSection()
+        this.menu.addMenuItem(this._itemsSection)
+
+        this.menu.addMenuItem(new PopupSeparatorMenuItem())
+        this.menu.addSettingsAction(_('Display Settings'), 'gnome-display-panel.desktop')
     }
 })
 
 const ExampleIndicator = GObject.registerClass(
 class ExampleIndicator extends SystemIndicator {
+    _init(extensionObject) {
+        super._init()
+
+        // this._indicator = this._addIndicator()
+        // this._indicator.iconName = 'video-display-symbolic'
+    }
+})
+
+export default class ExampleExtension extends Extension {
+    constructor(metadata) {
+        super(metadata)
+
+        this._extensionLocation = metadata.path
+    }
+
     async _initProxy() {
-        log("[toggle-displays] Initializing DBus proxy...")
+        // log("[toggle-displays] Initializing DBus proxy...")
 
         const TestProxy = Gio.DBusProxy.makeProxyWrapper(displayConfigInterface)
 
@@ -280,62 +281,10 @@ class ExampleIndicator extends SystemIndicator {
         return proxy
     }
 
-    _getCurrentConnectors(layout) {
-        log("[toggle-displays] Retrieving connectors...")
+    async _getMonitorConfigDirectly() {
+        // log("[toggle-displays] Retrieving monitor config directly...")
 
-        let outputNames = []
-
-        for (const display of layout) {
-            outputNames.push(display["model"] + "@" + display["connector"])
-        }
-
-        log("[toggle-displays] Found connectors", outputNames)
-
-        return outputNames
-    }
-
-    async _getMonitorConfig() {
-        log("[toggle-displays] Retrieving monitor config...")
-
-        Gio._promisify(Gio.Subprocess.prototype, 'communicate_utf8_async')
-
-        // let rawMonitorsConfig = GLib.file_get_contents(GLib.get_home_dir() + '/.config/monitors.xml').toString()
-
-        const proc = Gio.Subprocess.new(['python3', GLib.get_home_dir() + '/.local/share/gnome-shell/extensions/toggle-displays@w8jcik.gitlab.com/parse-monitors-config.py'],
-                Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE)
-        const [stdout, stderr] = await proc.communicate_utf8_async(null, null)
-
-        if (!proc.get_successful()) {
-            throw new Error(stderr)
-        }
-
-        log("[toggle-displays] Retrieved monitor config", stdout)
-
-        return stdout
-    }
-
-    sortPreset(preset) {
-        return Object.fromEntries(
-            Object.entries(preset).sort(([, a],[, b]) => a.x - b.x)
-        )
-    }
-
-    async _getPresetIndirectly(connectors) {
-        const rawPresets = await this._getMonitorConfig()
-
-        for (const preset of JSON.parse(rawPresets)["presets"]) {
-            if (areSetsEqual(new Set(Object.keys(preset)), new Set(connectors))) {
-                return this.sortPreset(preset)
-            }
-        }
-
-        return []
-    }
-
-    async _getMonitorConfigDirectly(proxy) {
-        log("[toggle-displays] Retrieving monitor config directly...")
-
-        const currentState = await proxy.GetCurrentStateAsync()
+        const currentState = await this._proxy.GetCurrentStateAsync()
         const [_rawSerial, rawMonitors, _rawLogicalMonitors, _rawProperties] = currentState
 
         let layout = []
@@ -369,10 +318,62 @@ class ExampleIndicator extends SystemIndicator {
         return layout
     }
 
-    async _setup(extensionObject) {
+    _getCurrentConnectors(layout) {
+        // log("[toggle-displays] Retrieving connectors...")
+
+        let outputNames = []
+
+        for (const display of layout) {
+            outputNames.push(display["model"] + "@" + display["connector"])
+        }
+
+        log("[toggle-displays] Found connectors", outputNames)
+
+        return outputNames
+    }
+
+    async _getMonitorConfig() {
+        // log("[toggle-displays] Retrieving monitor config...")
+
+        Gio._promisify(Gio.Subprocess.prototype, 'communicate_utf8_async')
+
+        // let rawMonitorsConfig = GLib.file_get_contents(GLib.get_home_dir() + '/.config/monitors.xml').toString()
+
+        const proc = Gio.Subprocess.new(['python', this._extensionLocation + '/parse-monitors-config.py'],
+                Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE)
+        const [stdout, stderr] = await proc.communicate_utf8_async(null, null)
+
+        if (!proc.get_successful()) {
+            throw new Error(stderr)
+        }
+
+        log("[toggle-displays] Retrieved monitor config", stdout)
+
+        return stdout
+    }
+
+    sortPreset(preset) {
+        return Object.fromEntries(
+            Object.entries(preset).sort(([, a],[, b]) => a.x - b.x)
+        )
+    }
+
+    async _getPresetIndirectly(connectors) {
+        const rawPresets = await this._getMonitorConfig()
+
+        for (const preset of JSON.parse(rawPresets)["presets"]) {
+            if (areSetsEqual(new Set(Object.keys(preset)), new Set(connectors))) {
+                return this.sortPreset(preset)
+            }
+        }
+
+        return []
+    }
+
+    async _asyncSetup() {
         this._proxy = await this._initProxy()
 
-        const layout = await this._getMonitorConfigDirectly(this._proxy)
+        const layout = await this._getMonitorConfigDirectly()
         const connectors = this._getCurrentConnectors(layout)
 
         this._displays = await this._getPresetIndirectly(connectors)
@@ -381,32 +382,18 @@ class ExampleIndicator extends SystemIndicator {
         this._menu.setupToggleAction(this._displays, this._proxy)
     }
 
-    _init(extensionObject) {
-        super._init()
-
-        console.log("[toggle-displays] Starting extension...")
-
-        // this._indicator = this._addIndicator()
-        // this._indicator.iconName = 'video-display-symbolic'
-
-        this._menu = new ExampleMenuToggle(extensionObject)
-        this._menu._itemsSection = new PopupMenuSection()
-        this._menu.menu.addMenuItem(this._menu._itemsSection)
-        this._menu.menu.addMenuItem(new PopupSeparatorMenuItem())
-        this._menu.menu.addSettingsAction(_('Display Settings'), 'gnome-display-panel.desktop')
-        this.quickSettingsItems.push(this._menu)
-
-        this._setup(extensionObject)
-
-        console.log("[toggle-displays] Done starting extension")
-    }
-})
-
-export default class ExampleExtension extends Extension {
     enable() {
-        this._indicator = new ExampleIndicator(this)
+        // log("[toggle-displays] Starting extension...")
 
+        this._indicator = new ExampleIndicator(this)
+        this._menu = new ExampleMenuToggle(this)
+
+        this._indicator.quickSettingsItems.push(this._menu)
         Main.panel.statusArea.quickSettings.addExternalIndicator(this._indicator)
+
+        this._asyncSetup()
+
+        log("[toggle-displays] Done starting extension")
     }
 
     disable() {
