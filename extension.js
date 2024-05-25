@@ -386,8 +386,8 @@ class ExampleIndicator extends SystemIndicator {
 
         console.log("[toggle-displays] Starting extension...")
 
-        this._indicator = this._addIndicator()
-        this._indicator.iconName = 'video-display-symbolic'
+        // this._indicator = this._addIndicator()
+        // this._indicator.iconName = 'video-display-symbolic'
 
         this._menu = new ExampleMenuToggle(extensionObject)
         this._menu._itemsSection = new PopupMenuSection()
