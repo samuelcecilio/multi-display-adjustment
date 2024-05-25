@@ -183,6 +183,16 @@ class ExampleMenuToggle extends QuickMenuToggle {
     }
 
     async setupToggleAction(displays, proxy) {
+        let allDisplaysEnabled = true
+
+        for (const [key, display] of Object.entries(displays)) {
+            if (!display.enabled) {
+                allDisplaysEnabled = false
+            }
+        }
+
+        this.checked = allDisplaysEnabled
+
         this.connect('clicked', async () => {
             if (this.checked) {
                 console.log("[toggle-displays] Enabling extra displays")
