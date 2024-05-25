@@ -110,6 +110,14 @@ const displayConfigInterface = `
 </node>`
 
 
+function getPossibleBoolean(variable, _property) {
+    if (_property in variable) {
+        return variable[_property].get_boolean()
+    }
+
+    return false
+}
+
 const ExampleToggle = GObject.registerClass(
 class ExampleToggle extends QuickToggle {
     constructor() {
@@ -262,23 +270,16 @@ class ExampleIndicator extends SystemIndicator {
         return proxy
     }
 
-    async _getCurrentConnectors(proxy) {
+    _getCurrentConnectors(layout) {
         log("[toggle-displays] Retrieving connectors...")
-
-        // gdbus call --session --dest=org.gnome.Mutter.DisplayConfig --object-path /org/gnome/Mutter/DisplayConfig --method org.gnome.Mutter.DisplayConfig.GetResources
-
-        const currentState = await proxy.GetCurrentStateAsync()
-        const logicalMonitors = currentState[2]
 
         let outputNames = []
 
-        for (const logicalMonitor of logicalMonitors) {
-            for (const monitorSpec of logicalMonitor[5]) {
-                outputNames.push(monitorSpec[2] + "@" + monitorSpec[0])
-            }
+        for (const display of layout) {
+            outputNames.push(display["model"] + "@" + display["connector"])
         }
 
-        log("[toggle-displays] Got connectors", outputNames)
+        log("[toggle-displays] Found connectors", outputNames)
 
         return outputNames
     }
@@ -309,22 +310,65 @@ class ExampleIndicator extends SystemIndicator {
         )
     }
 
-    async _setup(extensionObject) {
-        this._proxy = await this._initProxy()
-        const outputNames = await this._getCurrentConnectors(this._proxy)
+    async _getPresetIndirectly(connectors) {
+        const rawPresets = await this._getMonitorConfig()
 
-        this._getMonitorConfig().then((rawPresets) => {
-            for (const preset of JSON.parse(rawPresets)["presets"]) {
-                if (areSetsEqual(new Set(Object.keys(preset)), new Set(outputNames))) {
-                    this._displays = this.sortPreset(preset)
-                    this._menu.refreshEntries(this._displays, this._proxy)
-                    this._menu.setupToggleAction(this._displays, this._proxy)
+        for (const preset of JSON.parse(rawPresets)["presets"]) {
+            if (areSetsEqual(new Set(Object.keys(preset)), new Set(connectors))) {
+                return this.sortPreset(preset)
+            }
+        }
+
+        return []
+    }
+
+    async _getMonitorConfigDirectly(proxy) {
+        log("[toggle-displays] Retrieving monitor config directly...")
+
+        const currentState = await proxy.GetCurrentStateAsync()
+        const [_rawSerial, rawMonitors, _rawLogicalMonitors, _rawProperties] = currentState
+
+        let layout = []
+
+        for (const rawMonitor of rawMonitors) {
+            const rawMonitorSpec = rawMonitor[0]
+            const rawModes = rawMonitor[1]
+
+            for (const rawMode of rawModes) {
+                const rawProperties = rawMode[6]
+
+                if (getPossibleBoolean(rawProperties, "is-preferred")) {
+                    layout.push({
+                        connector: rawMonitorSpec[0],
+                        model: rawMonitorSpec[2],
+                        serial: rawMonitorSpec[3],
+                        width: rawMode[1],
+                        height: rawMode[2],
+                        rate: rawMode[3],
+                        rawRate: rawMode[0].split("@")[1],
+                        enabled: getPossibleBoolean(rawProperties, "is-current")
+                    })
+
                     break
                 }
             }
+        }
 
-            this._displays = []
-        })
+        log("[toggle-displays] Retrieved monitor config directly", layout)
+
+        return layout
+    }
+
+    async _setup(extensionObject) {
+        this._proxy = await this._initProxy()
+
+        const layout = await this._getMonitorConfigDirectly(this._proxy)
+        const connectors = this._getCurrentConnectors(layout)
+
+        this._displays = await this._getPresetIndirectly(connectors)
+
+        this._menu.refreshEntries(this._displays, this._proxy)
+        this._menu.setupToggleAction(this._displays, this._proxy)
     }
 
     _init(extensionObject) {
