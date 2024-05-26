@@ -53,20 +53,26 @@ class ToggleDisplaysMenuToggle extends QuickMenuToggle {
 
                 await menu._displayConfig.applyLayout(displays)
                 menu._refreshEntries(displays)
+                menu._updateToggleState(displays)
             })
         }
     }
 
-    async _setupToggleAction(displays) {
+    _updateToggleState(displays) {
         let allDisplaysEnabled = true
 
         for (const [key, display] of Object.entries(displays)) {
             if (!display.enabled) {
                 allDisplaysEnabled = false
+                break
             }
         }
 
         this.checked = allDisplaysEnabled
+    }
+
+    async _setupToggleAction(displays) {
+        this._updateToggleState(displays)
 
         this.connect('clicked', async () => {
             if (this.checked) {
@@ -87,6 +93,7 @@ class ToggleDisplaysMenuToggle extends QuickMenuToggle {
 
             await this._displayConfig.applyLayout(displays)
             this._refreshEntries(displays)
+            this._updateToggleState(displays)
         })
     }
 

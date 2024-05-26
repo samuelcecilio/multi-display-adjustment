@@ -188,7 +188,7 @@ class DisplayConfig {
             }
         }
 
-        return []
+        return { }
     }
 
     async _getLayoutFromMutter() {
