@@ -144,6 +144,8 @@ export default class ToggleDisplaysExtension extends Extension {
     enable() {
         devLog("[toggle-displays] Starting extension...")
 
+        this._settings = this.getSettings()
+
         this._indicator = new ToggleDisplaysIndicator()
         this._menu = new ToggleDisplaysMenuToggle(this._displayConfig)
 
@@ -163,5 +165,7 @@ export default class ToggleDisplaysExtension extends Extension {
 
         // this._menu.destroy()
         // this._menu = null
+
+        this._settings = null
     }
 }

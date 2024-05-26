@@ -2,7 +2,6 @@
   "name": "toggle-displays",
   "description": "Turn displays on and off",
   "uuid": "toggle-displays@w8jcik.gitlab.com",
-  "shell-version": [
-    "46"
-  ]
+  "shell-version": [ "46" ],
+  "settings-schema": "org.gnome.shell.extensions.toggle-displays@w8jcik.gitlab.com"
 }

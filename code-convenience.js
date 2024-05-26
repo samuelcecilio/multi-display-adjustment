@@ -13,4 +13,16 @@ function devLog(...args) {
     // log(...args)
 }
 
-export { areSetsEqual, devLog, getPossibleBoolean }
+/**
+ * Development inside of nested session is limited
+ *   dbus-run-session -- gnome-shell --nested
+ * 
+ * It is not possible to control the displays. Yet the GUI can partially work
+ * if correct list of displays and corresponding connectors is provided.
+ */
+function devOverrideOutputNames(outputNames) {
+    // return ["EV2436W@DP-1", "DELL U2711@DP-2", "DELL 2209WA@HDMI-2"]
+    return outputNames
+}
+
+export { areSetsEqual, devLog, devOverrideOutputNames, getPossibleBoolean }

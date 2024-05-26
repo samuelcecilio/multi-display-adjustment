@@ -1,6 +1,6 @@
 import Gio from 'gi://Gio'
 
-import { areSetsEqual, devLog, getPossibleBoolean } from './code-convenience.js'
+import { areSetsEqual, devLog, devOverrideOutputNames, getPossibleBoolean } from './code-convenience.js'
 
 /**
  * Retrieves layout of displays using Mutter interface called DisplayConfig
@@ -235,6 +235,8 @@ class DisplayConfig {
         for (const display of layout) {
             outputNames.push(display["model"] + "@" + display["connector"])
         }
+
+        outputNames = devOverrideOutputNames(outputNames)
 
         devLog("[toggle-displays] Found connectors", outputNames)
 
