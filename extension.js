@@ -15,6 +15,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
+import GLib from 'gi://GLib'
 import GObject from 'gi://GObject'
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js'
@@ -23,7 +24,7 @@ import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/
 import { QuickMenuToggle, SystemIndicator } from 'resource:///org/gnome/shell/ui/quickSettings.js'
 import { PopupMenuSection, PopupSeparatorMenuItem } from 'resource:///org/gnome/shell/ui/popupMenu.js'
 
-import { devLog } from './code-convenience.js'
+import { devLog, emptyObject } from './code-convenience.js'
 import { DisplayConfig } from './display-config.js'
 
 const ToggleDisplaysMenuToggle = GObject.registerClass(
@@ -133,9 +134,52 @@ export default class ToggleDisplaysExtension extends Extension {
         this._displayConfig = new DisplayConfig(metadata.path)
     }
 
+    _storeLayout(displays) {
+        let serializedDisplays = {}
+
+        for (const [key, display] of Object.entries(displays)) {
+            if (display.enabled) {
+                const serializedDisplay = new GLib.Variant('a{sv}', {
+                    x: GLib.Variant.new_uint32(display.x),
+                    y: GLib.Variant.new_uint32(display.y),
+                    scale: GLib.Variant.new_double(display.scale),
+                    primary: GLib.Variant.new_boolean(display.primary),
+                    connector: GLib.Variant.new_string(display.connector),
+                    model: GLib.Variant.new_string(display.model),
+                    serial: GLib.Variant.new_string(display.serial),
+                    width: GLib.Variant.new_uint32(display.width),
+                    height: GLib.Variant.new_uint32(display.height),
+                    rate: GLib.Variant.new_double(display.rate),
+                    rawRate: GLib.Variant.new_string(display.rawRate),
+                    enabled: GLib.Variant.new_boolean(display.enabled)
+                })
+
+                serializedDisplays[display.model + "@" + display.connector] = serializedDisplay
+            }
+        }
+
+        this._settings.set_value("layout", new GLib.Variant('a{sv}', serializedDisplays))
+    }
+
+    _loadLayout() {
+        return this._settings.get_value("layout").recursiveUnpack()
+    }
+
     async _asyncSetup() {
         await this._displayConfig.init()
         this._displays = await this._displayConfig.getDisplays()
+
+        if (!emptyObject(this._displays)) {
+            devLog("[toggle-displays] Storing monitor config", this._displays)
+
+            this._storeLayout(this._displays)
+        } else {
+            devLog("[toggle-displays] No matching layout have been found, restoring from storage")
+
+            this._displays = this._loadLayout()
+
+            devLog("[toggle-displays] Restored layout", this._displays)
+        }
 
         this._menu._refreshEntries(this._displays)
         this._menu._setupToggleAction(this._displays)

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
   <schema id="org.gnome.shell.extensions.toggle-displays@w8jcik.gitlab.com" path="/org/gnome/shell/extensions/toggle-displays@w8jcik.gitlab.com/">
-    <key name="layouts" type="b">
-      <default>true</default>
+    <key name="layout" type="a{sv}">
+      <default>{}</default>
     </key>
   </schema>
 </schemalist>
