@@ -8,6 +8,10 @@ function getPossibleBoolean(variable, _property) {
     return false
 }
 
+function emptyObject(object_) {
+    return Object.keys(object_).length === 0
+}
+
 function devLog(...args) {
     // Enable during development to see the logs in journalctl -xef
     // log(...args)
@@ -25,4 +29,4 @@ function devOverrideOutputNames(outputNames) {
     return outputNames
 }
 
-export { areSetsEqual, devLog, devOverrideOutputNames, getPossibleBoolean }
+export { areSetsEqual, devLog, devOverrideOutputNames, emptyObject, getPossibleBoolean }
