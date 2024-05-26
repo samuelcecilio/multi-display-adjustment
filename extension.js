@@ -165,6 +165,16 @@ export default class ToggleDisplaysExtension extends Extension {
         return this._settings.get_value("layout").recursiveUnpack()
     }
 
+    async _correctLayout() {
+        for (const display of await this._displayConfig._getLayoutFromMutter()) {
+            const key = display.model + "@" + display.connector
+
+            if (key in this._displays) {
+                this._displays[key].enabled = display.enabled
+            }
+        }
+    }
+
     async _asyncSetup() {
         await this._displayConfig.init()
         this._displays = await this._displayConfig.getDisplays()
@@ -177,6 +187,7 @@ export default class ToggleDisplaysExtension extends Extension {
             devLog("[toggle-displays] No matching layout have been found, restoring from storage")
 
             this._displays = this._loadLayout()
+            await this._correctLayout()
 
             devLog("[toggle-displays] Restored layout", this._displays)
         }
