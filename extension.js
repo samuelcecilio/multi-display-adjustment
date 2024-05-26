@@ -111,10 +111,49 @@ const displayConfigInterface = `
 
 const ExampleMenuToggle = GObject.registerClass(
 class ExampleMenuToggle extends QuickMenuToggle {
-    refreshEntries = (displays, proxy) => {
-        const menu = this
+    async applyLayout(displays, proxy) {
+        console.log("Applying layout")
 
+        let xs = []
+        let ys = []
+
+        for (const [key, display] of Object.entries(displays)) {
+            if (display.enabled) {
+              xs.push(display.x)
+              ys.push(display.y)
+            }
+        }
+
+        const minX = Math.min(...xs)
+        const minY = Math.min(...ys)
+
+        let logicalMonitors = []
+
+        for (const [key, display] of Object.entries(displays)) {
+            if (!display.enabled) {
+                continue
+            }
+
+            logicalMonitors.push([
+                display.x - minX, display.y - minY, 1.0, 0, display.primary, [[ display.connector, '' + display.width + 'x' + display.height + '@' + display.rawRate, { } ]]
+            ])
+        }
+
+        log(logicalMonitors)
+
+        const serial = parseInt((await proxy.GetResourcesAsync())[0])
+        const method = 1
+        const properties = { }
+
+        console.log("serial", serial)
+
+        proxy.ApplyMonitorsConfigAsync(serial, method, logicalMonitors, properties)
+    }
+
+    refreshEntries(displays, proxy) {
         this._itemsSection.removeAll()
+
+        const menu = this
 
         for (const [key, display] of Object.entries(displays)) {
             let label = display.model
@@ -134,29 +173,7 @@ class ExampleMenuToggle extends QuickMenuToggle {
 
                 display.enabled = !display.enabled
 
-                const method = 1
-                let logicalMonitors = []
-                const properties = { }
-
-                let disabledX = 0
-
-                for (const [key, display] of Object.entries(displays)) {
-                    if (!display.enabled) {
-                        disabledX += display.width
-                        continue
-                    }
-
-                    logicalMonitors.push([
-                        display.x - disabledX, display.y, 1.0, 0, display.primary, [[ display.connector, '' + display.width + 'x' + display.height + '@' + display.rawRate, { } ]]
-                    ])
-                }
-
-                log(logicalMonitors)
-
-                const [rawSerial, _crtcs, _outputs, _modes] = await proxy.GetResourcesAsync()
-
-                proxy.ApplyMonitorsConfigAsync(parseInt(rawSerial), method, logicalMonitors, properties)
-
+                await menu.applyLayout(displays, proxy)
                 menu.refreshEntries(displays, proxy)
             })
         }
@@ -190,29 +207,7 @@ class ExampleMenuToggle extends QuickMenuToggle {
                 }
             }
 
-            const method = 1
-            let logicalMonitors = []
-            const properties = { }
-
-            let disabledX = 0
-
-            for (const [key, display] of Object.entries(displays)) {
-                if (!display.enabled) {
-                    disabledX += display.width
-                    continue
-                }
-
-                logicalMonitors.push([
-                    display.x - disabledX, display.y, 1.0, 0, display.primary, [[ display.connector, '' + display.width + 'x' + display.height + '@' + display.rawRate, { } ]]
-                ])
-            }
-
-            log(logicalMonitors)
-
-            const [rawSerial, _crtcs, _outputs, _modes] = await proxy.GetResourcesAsync()
-
-            proxy.ApplyMonitorsConfigAsync(parseInt(rawSerial), method, logicalMonitors, properties)
-
+            await this.applyLayout(displays, proxy)
             this.refreshEntries(displays, proxy)
         })
     }
