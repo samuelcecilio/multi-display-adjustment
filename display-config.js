@@ -1,8 +1,6 @@
 import Gio from 'gi://Gio'
-import GLib from 'gi://GLib'
 
-import { areSetsEqual } from './code-convenience.js'
-import { getPossibleBoolean } from './code-convenience.js'
+import { areSetsEqual, devLog, getPossibleBoolean } from './code-convenience.js'
 
 /**
  * Retrieves layout of displays using Mutter interface called DisplayConfig
@@ -20,9 +18,8 @@ import { getPossibleBoolean } from './code-convenience.js'
  * of the displays.
  */
 class DisplayConfig {
-    constructor(extensionLocation, debug) {
+    constructor(extensionLocation) {
         this._extensionLocation = extensionLocation
-        this._debug = debug
     }
 
     /**
@@ -122,9 +119,7 @@ class DisplayConfig {
         </node>`
 
     async _initProxy() {
-        if (this._debug) {
-            log("[toggle-displays] Initializing DBus proxy...")
-        }
+        devLog("[toggle-displays] Initializing DBus proxy...")
 
         const TestProxy = Gio.DBusProxy.makeProxyWrapper(this._displayConfigInterface)
 
@@ -142,9 +137,7 @@ class DisplayConfig {
             )
         })
 
-        if (this._debug) {
-            log("[toggle-displays] DBus proxy is ready")
-        }
+        devLog("[toggle-displays] DBus proxy is ready")
     }
 
     async init() {
@@ -168,9 +161,7 @@ class DisplayConfig {
      * with external Python script.
      */
     async _getLayoutsFromConfigFile() {
-        if (this._debug) {
-            log("[toggle-displays] Retrieving monitor config...")
-        }
+        devLog("[toggle-displays] Retrieving monitor config...")
 
         Gio._promisify(Gio.Subprocess.prototype, 'communicate_utf8_async')
 
@@ -182,9 +173,7 @@ class DisplayConfig {
             throw new Error(stderr)
         }
 
-        if (this._debug) {
-            log("[toggle-displays] Retrieved monitor config", stdout)
-        }
+        devLog("[toggle-displays] Retrieved monitor config", stdout)
 
         return stdout
     }
@@ -203,32 +192,29 @@ class DisplayConfig {
     }
 
     async _getLayoutFromMutter() {
-        if (this._debug) {
-            log("[toggle-displays] Retrieving monitor config directly...")
-        }
+        devLog("[toggle-displays] Retrieving monitor config directly...")
 
         const currentState = await this._proxy.GetCurrentStateAsync()
-        const [_rawSerial, rawMonitors, _rawLogicalMonitors, _rawProperties] = currentState
 
         let layout = []
 
-        for (const rawMonitor of rawMonitors) {
-            const rawMonitorSpec = rawMonitor[0]
-            const rawModes = rawMonitor[1]
+        for (const monitor of currentState[1]) {
+            const monitorSpec = monitor[0]
+            const modes = monitor[1]
 
-            for (const rawMode of rawModes) {
-                const rawProperties = rawMode[6]
+            for (const mode of modes) {
+                const modeProperties = mode[6]
 
-                if (getPossibleBoolean(rawProperties, "is-preferred")) {
+                if (getPossibleBoolean(modeProperties, "is-preferred")) {
                     layout.push({
-                        connector: rawMonitorSpec[0],
-                        model: rawMonitorSpec[2],
-                        serial: rawMonitorSpec[3],
-                        width: rawMode[1],
-                        height: rawMode[2],
-                        rate: rawMode[3],
-                        rawRate: rawMode[0].split("@")[1],
-                        enabled: getPossibleBoolean(rawProperties, "is-current")
+                        connector: monitorSpec[0],
+                        model: monitorSpec[2],
+                        serial: monitorSpec[3],
+                        width: mode[1],
+                        height: mode[2],
+                        rate: mode[3],
+                        rawRate: mode[0].split("@")[1],
+                        enabled: getPossibleBoolean(modeProperties, "is-current")
                     })
 
                     break
@@ -236,17 +222,13 @@ class DisplayConfig {
             }
         }
 
-        if (this._debug) {
-            log("[toggle-displays] Retrieved monitor config directly", layout)
-        }
+        devLog("[toggle-displays] Retrieved monitor config directly", layout)
 
         return layout
     }
 
     _getCurrentConnectors(layout) {
-        if (this._debug) {
-            log("[toggle-displays] Retrieving connectors...")
-        }
+        devLog("[toggle-displays] Retrieving connectors...")
 
         let outputNames = []
 
@@ -254,20 +236,16 @@ class DisplayConfig {
             outputNames.push(display["model"] + "@" + display["connector"])
         }
 
-        if (this._debug) {
-            log("[toggle-displays] Found connectors", outputNames)
-        }
+        devLog("[toggle-displays] Found connectors", outputNames)
 
         return outputNames
     }
 
     async getDisplays() {
-        const layout = await this._getLayoutFromMutter()
-        const connectors = this._getCurrentConnectors(layout)
-
-        return await this._getLayoutFromConfigFile(connectors)
+        return await this._getLayoutFromConfigFile(this._getCurrentConnectors(await this._getLayoutFromMutter()))
     }
 
+    /** Configure displays through Mutter. */
     async applyLayout(displays) {
         let xs = []
         let ys = []
@@ -294,9 +272,7 @@ class DisplayConfig {
             ])
         }
 
-        if (this._debug) {
-            log("[toggle-displays] Applying layout", logicalMonitors)
-        }
+        devLog("[toggle-displays] Applying layout", logicalMonitors)
 
         const serial = parseInt((await this._proxy.GetResourcesAsync())[0])
         const method = 1

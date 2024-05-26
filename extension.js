@@ -23,10 +23,11 @@ import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/
 import { QuickMenuToggle, SystemIndicator } from 'resource:///org/gnome/shell/ui/quickSettings.js'
 import { PopupMenuSection, PopupSeparatorMenuItem } from 'resource:///org/gnome/shell/ui/popupMenu.js'
 
+import { devLog } from './code-convenience.js'
 import { DisplayConfig } from './display-config.js'
 
-const ExampleMenuToggle = GObject.registerClass(
-class ExampleMenuToggle extends QuickMenuToggle {
+const ToggleDisplaysMenuToggle = GObject.registerClass(
+class ToggleDisplaysMenuToggle extends QuickMenuToggle {
     _refreshEntries(displays) {
         this._itemsSection.removeAll()
 
@@ -69,13 +70,13 @@ class ExampleMenuToggle extends QuickMenuToggle {
 
         this.connect('clicked', async () => {
             if (this.checked) {
-                log("[toggle-displays] Enabling extra displays")
+                devLog("[toggle-displays] Enabling extra displays")
 
                 for (const [key, display] of Object.entries(displays)) {
                     display.enabled = true
                 }
             } else {
-                log("[toggle-displays] Disabling extra displays")
+                devLog("[toggle-displays] Disabling extra displays")
 
                 for (const [key, display] of Object.entries(displays)) {
                     if (!display.primary) {
@@ -122,7 +123,6 @@ export default class ToggleDisplaysExtension extends Extension {
     constructor(metadata) {
         super(metadata)
 
-        this._debug = false  // flip to see the logs
         this._displayConfig = new DisplayConfig(metadata.path)
     }
 
@@ -135,17 +135,17 @@ export default class ToggleDisplaysExtension extends Extension {
     }
 
     enable() {
-        log("[toggle-displays] Starting extension...")
+        devLog("[toggle-displays] Starting extension...")
 
         this._indicator = new ToggleDisplaysIndicator()
-        this._menu = new ExampleMenuToggle(this._displayConfig, this._debug)
+        this._menu = new ToggleDisplaysMenuToggle(this._displayConfig)
 
         this._indicator.quickSettingsItems.push(this._menu)
         Main.panel.statusArea.quickSettings.addExternalIndicator(this._indicator)
 
         this._asyncSetup()
 
-        log("[toggle-displays] Done starting extension")
+        devLog("[toggle-displays] Done starting extension")
     }
 
     disable() {

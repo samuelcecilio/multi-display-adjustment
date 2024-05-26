@@ -8,4 +8,9 @@ function getPossibleBoolean(variable, _property) {
     return false
 }
 
-export { areSetsEqual, getPossibleBoolean }
+function devLog(...args) {
+    // Enable during development to see the logs in journalctl -xef
+    // log(...args)
+}
+
+export { areSetsEqual, devLog, getPossibleBoolean }
