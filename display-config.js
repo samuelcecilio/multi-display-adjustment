@@ -1,6 +1,6 @@
 import Gio from 'gi://Gio'
 
-import { areSetsEqual, devLog, devOverrideOutputNames, getPossibleBoolean } from './code-convenience.js'
+import { areSetsEqual, devLog, devOverrideOutputNames, getPossibleBoolean, startsWith } from './code-convenience.js'
 
 /**
  * Retrieves layout of displays using Mutter interface called DisplayConfig
@@ -192,7 +192,7 @@ class DisplayConfig {
     }
 
     async _getLayoutFromMutter() {
-        devLog("[toggle-displays] Retrieving monitor config directly...")
+        devLog("[toggle-displays] Retrieving displays layout from Mutter...")
 
         const currentState = await this._proxy.GetCurrentStateAsync()
 
@@ -202,14 +202,22 @@ class DisplayConfig {
             const monitorSpec = monitor[0]
             const modes = monitor[1]
 
+            const connector = monitorSpec[0]
+            const model = monitorSpec[2]
+            const serial = monitorSpec[3]
+
+            if (startsWith(connector, "None")) {
+                continue
+            }
+
             for (const mode of modes) {
                 const modeProperties = mode[6]
 
                 if (getPossibleBoolean(modeProperties, "is-preferred")) {
                     layout.push({
-                        connector: monitorSpec[0],
-                        model: monitorSpec[2],
-                        serial: monitorSpec[3],
+                        connector,
+                        model,
+                        serial,
                         width: mode[1],
                         height: mode[2],
                         rate: mode[3],
@@ -222,7 +230,7 @@ class DisplayConfig {
             }
         }
 
-        devLog("[toggle-displays] Retrieved monitor config directly", layout)
+        devLog("[toggle-displays] Retrieved displays layout from Mutter", layout)
 
         return layout
     }

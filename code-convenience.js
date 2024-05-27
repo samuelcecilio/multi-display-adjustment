@@ -12,6 +12,10 @@ function emptyObject(object_) {
     return Object.keys(object_).length === 0
 }
 
+function startsWith(text, beginning) {
+    return text.substr(0, beginning.length) == beginning
+}
+
 function devLog(...args) {
     // Enable during development to see the logs in journalctl -xef
     // log(...args)
@@ -29,4 +33,4 @@ function devOverrideOutputNames(outputNames) {
     return outputNames
 }
 
-export { areSetsEqual, devLog, devOverrideOutputNames, emptyObject, getPossibleBoolean }
+export { areSetsEqual, devLog, devOverrideOutputNames, emptyObject, getPossibleBoolean, startsWith }
