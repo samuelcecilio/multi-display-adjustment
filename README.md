@@ -2,7 +2,7 @@
 
 ```bash
 cd ~/.local/share/gnome-shell/extensions
-git clone https://gitlab.com/w8jcik/toggle-displays.git
+git clone https://gitlab.com/w8jcik/toggle-displays.git toggle-displays@w8jcik.gitlab.com
 ```
 
 `git clone git@gitlab.com:w8jcik/toggle-displays.git` for development.
@@ -11,10 +11,28 @@ git clone https://gitlab.com/w8jcik/toggle-displays.git
 
 * GNOME 46  
   45 might also work, but I didn't test it.  
-  To give it a try change metadata.json and install extension manually.  
+  To give it a try change `metadata.json` and install extension manually.  
 * Python >= 3.6 (many distributions install it by default)
+* `libddcutil`  
 
-# Start
+  ```bash
+  sudo apt install libddcutil-dev
+  ```
+
+* `ddcutil-service`  
+
+  ```bash
+  git clone git@github.com:digitaltrails/ddcutil-service.git
+  cd ddcutil-service
+  make
+  make install
+  ```
+
+  Package installs to `~/.local/share/dbus-1/services/com.ddcutil.DdcutilService.service` and `~/.local/bin/ddcutil-service`.
+
+# Development
+
+## Start
 
 ```bash
 export MUTTER_DEBUG_DUMMY_MODE_SPECS="1366x768"
@@ -24,7 +42,7 @@ export MUTTER_DEBUG_DUMMY_MODE_SPECS="1366x768"
 dbus-run-session -- gnome-shell --nested
 ```
 
-# Development
+## Dbus examples
 
 This extension largely depends on a Mutter interface called `DisplayConfig`
 
@@ -60,6 +78,8 @@ const currentState = await proxy.GetCurrentStateAsync()
 console.log("[toggle-displays] Current displays state", currentState)
 const [rawSerial, monitors, logicalMonitors, properties] = currentState
 ```
+
+## Display configuration from GNOME settings
 
 Example reading of display configurations from `~/.config/monitors.xml`
 
