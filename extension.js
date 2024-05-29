@@ -24,8 +24,10 @@ import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/
 import { QuickMenuToggle, SystemIndicator } from 'resource:///org/gnome/shell/ui/quickSettings.js'
 import { PopupMenuSection, PopupSeparatorMenuItem } from 'resource:///org/gnome/shell/ui/popupMenu.js'
 
+import { BrightnessIndicator, BrightnessSlider } from './brightness.js'
 import { devLog, emptyObject } from './code-convenience.js'
 import { DisplayConfig } from './display-config.js'
+import { DdcutilService } from './ddcutil-service.js'
 
 const ToggleDisplaysMenuToggle = GObject.registerClass(
 class ToggleDisplaysMenuToggle extends QuickMenuToggle {
@@ -122,8 +124,8 @@ class ToggleDisplaysIndicator extends SystemIndicator {
     _init() {
         super._init()
 
-        // this._indicator = this._addIndicator()
-        // this._indicator.iconName = 'video-display-symbolic'
+        // this._toggleDisplaysIndicator = this._addIndicator()
+        // this._toggleDisplaysIndicator.iconName = 'video-display-symbolic'
     }
 })
 
@@ -132,6 +134,7 @@ export default class ToggleDisplaysExtension extends Extension {
         super(metadata)
 
         this._displayConfig = new DisplayConfig(metadata.path)
+        this._ddcutilService = new DdcutilService()
     }
 
     _storeLayout(displays) {
@@ -175,7 +178,30 @@ export default class ToggleDisplaysExtension extends Extension {
         }
     }
 
-    async _asyncSetup() {
+    _brightnessSliders = []
+
+    async _destroySliders() {
+        this._brightnessSliders.forEach(item => item.destroy())
+        this._brightnessSliders = []
+    }
+
+    async _rebuildSliders() {
+        const ddcDisplays = await this._ddcutilService._getDisplays()
+
+        this._destroySliders()
+
+        for (const ddcDisplay of ddcDisplays) {
+            const slider = new BrightnessSlider(this, ddcDisplay.displayId)
+            this._brightnessSliders.push(slider)
+            this._brightnessSlidersIndicator.quickSettingsItems.push(slider)
+
+            slider._fetchInitialBrightness()
+        }
+
+        Main.panel.statusArea.quickSettings.addExternalIndicator(this._brightnessSlidersIndicator, 2)
+    }
+
+    async _init() {
         await this._displayConfig.init()
         this._displays = await this._displayConfig.getDisplays()
 
@@ -192,34 +218,40 @@ export default class ToggleDisplaysExtension extends Extension {
             devLog("[toggle-displays] Restored layout", this._displays)
         }
 
-        this._menu._refreshEntries(this._displays)
-        this._menu._setupToggleAction(this._displays)
+        this._toggleDisplaysMenu._refreshEntries(this._displays)
+        this._toggleDisplaysMenu._setupToggleAction(this._displays)
+
+        await this._ddcutilService._init()
+        await this._rebuildSliders()
     }
 
     enable() {
         devLog("[toggle-displays] Starting extension...")
 
         this._settings = this.getSettings()
+        this._toggleDisplaysIndicator = new ToggleDisplaysIndicator()
+        this._toggleDisplaysMenu = new ToggleDisplaysMenuToggle(this._displayConfig)
+        this._toggleDisplaysIndicator.quickSettingsItems.push(this._toggleDisplaysMenu)
+        Main.panel.statusArea.quickSettings.addExternalIndicator(this._toggleDisplaysIndicator)
 
-        this._indicator = new ToggleDisplaysIndicator()
-        this._menu = new ToggleDisplaysMenuToggle(this._displayConfig)
+        this._brightnessSlidersIndicator = new BrightnessIndicator()
 
-        this._indicator.quickSettingsItems.push(this._menu)
-        Main.panel.statusArea.quickSettings.addExternalIndicator(this._indicator)
-
-        this._asyncSetup()
+        this._init()
 
         devLog("[toggle-displays] Done starting extension")
     }
 
     disable() {
-        this._indicator.quickSettingsItems.forEach(item => item.destroy())
+        this._toggleDisplaysIndicator.quickSettingsItems.forEach(item => item.destroy())
+        this._toggleDisplaysMenu.destroy()
+        this._toggleDisplaysMenu = null
+        this._toggleDisplaysIndicator.destroy()
+        this._toggleDisplaysIndicator = null
 
-        this._indicator.destroy()
-        this._indicator = null
-
-        // this._menu.destroy()
-        // this._menu = null
+        this._brightnessSlidersIndicator.quickSettingsItems.forEach(item => item.destroy())
+        this._destroySliders()
+        this._brightnessSlidersIndicator.destroy()
+        this._brightnessSlidersIndicator = null
 
         this._settings = null
     }
