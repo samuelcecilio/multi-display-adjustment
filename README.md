@@ -1,19 +1,18 @@
-# Clone
+# Displays extension for GNOME
 
-```bash
-cd ~/.local/share/gnome-shell/extensions
-git clone https://gitlab.com/w8jcik/toggle-displays.git toggle-displays@w8jcik.gitlab.com
-```
+Offers switches to turn extra displays on and off, offers sliders to control their brightness.
 
-`git clone git@gitlab.com:w8jcik/toggle-displays.git` for development.
+When using multiple displays one often wishes to turn selected displays on and off. GNOME settings panel allows that, but every time display is turned off it is loosing it's position in the layout of the displays. This extension remembers the last configuration that includes all the displays and uses it to preserve the layout, while offering simple on/off switches for each display.
 
-# Dependencies
+To control brightness of external displays (through DDC) install `ddcutil-service`. Installation process of `ddcutil-service` is quick and non-intrusive. `ddcutil-service` allows more responsive communication with the displays than ddcutil.
 
-* GNOME 46  
-  45 might also work, but I didn't test it.  
-  To give it a try change `metadata.json` and install extension manually.  
-* Python >= 3.6 (many distributions install it by default)
+## Dependencies
+
+* GNOME 46
+* Python >= 3.6 (many distributions install it by the default)
 * `libddcutil`  
+
+  For example in Ubuntu and Debian
 
   ```bash
   sudo apt install libddcutil-dev
@@ -28,9 +27,20 @@ git clone https://gitlab.com/w8jcik/toggle-displays.git toggle-displays@w8jcik.g
   make install
   ```
 
-  Package installs to `~/.local/share/dbus-1/services/com.ddcutil.DdcutilService.service` and `~/.local/bin/ddcutil-service`.
+  Package installs to `~/.local/share/dbus-1/services/com.ddcutil.DdcutilService.service` and `~/.local/bin/ddcutil-service`. It is activated after the next login.
 
 # Development
+
+## Clone
+
+```bash
+cd ~/.local/share/gnome-shell/extensions
+git clone https://gitlab.com/w8jcik/toggle-displays.git displays@w8jcik.gitlab.com
+cd displays@w8jcik.gitlab.com
+glib-compile-schemas schemas/
+```
+
+`git clone git@gitlab.com:w8jcik/toggle-displays.git` for development.
 
 ## Start
 
