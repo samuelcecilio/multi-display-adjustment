@@ -6,6 +6,8 @@ When using multiple displays one often wishes to turn selected displays on and o
 
 To control brightness of external displays (through DDC) install `ddcutil-service`. Installation process of `ddcutil-service` is quick and non-intrusive. `ddcutil-service` allows more responsive communication with the displays than ddcutil.
 
+A convenient way to install GNOME extensions, including this extension is to use [Extension Manager](https://flathub.org/apps/com.mattjakeman.ExtensionManager).
+
 ## Dependencies
 
 * GNOME 46
