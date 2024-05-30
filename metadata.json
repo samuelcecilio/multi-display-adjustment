@@ -1,7 +1,7 @@
 {
-  "name": "toggle-displays",
-  "description": "Turn displays on and off",
-  "uuid": "toggle-displays@w8jcik.gitlab.com",
+  "name": "Displays",
+  "description": "Turn displays on and off, control brightness.\nWhen using multiple displays one often wishes to turn selected displays on and off. GNOME settings panel allows that, but every time display is turned off it is loosing it's position in the layout of the displays. This extension remembers the last configuration that includes all the displays and uses it to preserve the layout, while offering simple on/off switches for each display.\nTo control brightness of external displays (through DDC) install ddcutil-service. Installation process is quick and non-intrusive. More details in the README.md of https://gitlab.com/w8jcik/displays. ddcutil-service allows more responsive communication with the displays than ddcutil.",
+  "uuid": "displays@w8jcik.gitlab.com",
   "shell-version": [ "46" ],
-  "settings-schema": "org.gnome.shell.extensions.toggle-displays@w8jcik.gitlab.com"
+  "settings-schema": "org.gnome.shell.extensions.displays@w8jcik.gitlab.com"
 }
