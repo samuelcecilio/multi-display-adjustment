@@ -14,24 +14,25 @@ A convenient way to install GNOME extensions, including this extension is to use
 
 * GNOME 46
 * Python >= 3.6 (many distributions install it by the default)
-* `libddcutil`  
-
-  For example in Ubuntu and Debian
-
-  ```bash
-  sudo apt install libddcutil-dev
-  ```
-
-* `ddcutil-service`  
-
-  ```bash
-  git clone git@github.com:digitaltrails/ddcutil-service.git
-  cd ddcutil-service
-  make
-  make install
-  ```
-
-  Package installs to `~/.local/share/dbus-1/services/com.ddcutil.DdcutilService.service` and `~/.local/bin/ddcutil-service`. It is activated after the next login.
+* `ddcutil-service` (optional, for brightness control)  
+  * [Ubuntu and Debian packages](https://gitlab.com/w8jcik/ddcutil-service.deb) (built by me)
+  * [Arch AUR package](https://aur.archlinux.org/packages/ddcutil-service)
+  * [OpenSUSE packages](https://software.opensuse.org/package/ddcutil-service)
+  * Manual installation
+    - Dependencies `ddcutil` and `libddcutil`  
+      For example in Ubuntu and Debian
+      ```bash
+      sudo apt install ddcutil libddcutil-dev
+      ```
+      `ddcutil` is not used directly, it only provides Udev rules.
+    - Build and install the service
+      ```bash
+      git clone git@github.com:digitaltrails/ddcutil-service.git
+      cd ddcutil-service
+      make
+      make install
+      ```
+      Service installs to `~/.local/share/dbus-1/services/com.ddcutil.DdcutilService.service` and `~/.local/bin/ddcutil-service`. It is activated after the next login.
 
 # Development
 
