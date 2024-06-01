@@ -14,17 +14,19 @@ A convenient way to install GNOME extensions, including this extension is to use
 
 * GNOME 46
 * Python >= 3.6 (many distributions install it by the default)
-* `ddcutil-service` (optional, for brightness control)  
+* [_ddcutil-service_](https://github.com/digitaltrails/ddcutil-service) (optional, for brightness control)  
+
+## Installation of _ddcutil-service_
+
   * [Ubuntu and Debian packages](https://gitlab.com/w8jcik/ddcutil-service.deb) (built by me)
   * [Arch AUR package](https://aur.archlinux.org/packages/ddcutil-service)
   * [OpenSUSE packages](https://software.opensuse.org/package/ddcutil-service)
   * Manual installation
-    - Dependencies `ddcutil` and `libddcutil`  
+    - Dependencies `ddcutil`, `libddcutil` and `glib`  
       For example in Ubuntu and Debian
       ```bash
-      sudo apt install ddcutil libddcutil-dev
+      sudo apt install ddcutil libddcutil-dev libglib2.0-dev
       ```
-      `ddcutil` is not used directly, it only provides Udev rules.
     - Build and install the service
       ```bash
       git clone git@github.com:digitaltrails/ddcutil-service.git
@@ -34,70 +36,22 @@ A convenient way to install GNOME extensions, including this extension is to use
       ```
       Service installs to `~/.local/share/dbus-1/services/com.ddcutil.DdcutilService.service` and `~/.local/bin/ddcutil-service`. It is activated after the next login.
 
-# Development
+## Diagnosing issues
 
-## Clone
+In case the brightness sliders are not visible or they don't change the brightness, check if the underlaying `ddcutil` works.
 
-```bash
-cd ~/.local/share/gnome-shell/extensions
-git clone https://gitlab.com/w8jcik/toggle-displays.git displays@w8jcik.gitlab.com
-cd displays@w8jcik.gitlab.com
-glib-compile-schemas schemas/
-```
-
-`git clone git@gitlab.com:w8jcik/toggle-displays.git` for development.
-
-## Start
+Following call checks if the displays are reachable
 
 ```bash
-export MUTTER_DEBUG_DUMMY_MODE_SPECS="1366x768"
+ddcutil detect
 ```
+
+Following call adjusts the brightness of the first display to 50%
 
 ```bash
-dbus-run-session -- gnome-shell --nested
+ddcutil -d 1 setvcp 10 50
 ```
 
-## Dbus examples
+In case `ddcutil` works, describe [an issue](https://gitlab.com/w8jcik/displays/-/issues) in the repository of this extension. Otherwise consider opening an issue in the `ddcutil` project.
 
-This extension largely depends on a Mutter interface called `DisplayConfig`
-
-Consider example of three displays
-  * `DP-1` `1920x1200@59.950`
-  * `DP-2` `2560x1440@59.951`
-  * `HDMI-2` `1680x1050@59.954`
-
-Example call to distribute displays left to right
-
-```bash
-serial=$(gdbus call --session --dest=org.gnome.Mutter.DisplayConfig --object-path /org/gnome/Mutter/DisplayConfig --method org.gnome.Mutter.DisplayConfig.GetResources | awk ' { print $2 }' | grep -oE [0-9]+)
-
-gdbus call --session \
-    --dest=org.gnome.Mutter.DisplayConfig \
-    --object-path /org/gnome/Mutter/DisplayConfig \
-    --method org.gnome.Mutter.DisplayConfig.ApplyMonitorsConfig \
-    ${serial} 1 "[(0, 240, 1.0, 0, false, [('DP-1', '1920x1200@59.950', [])]), (1920, 0, 1.0, 0, true, [('DP-2', '2560x1440@59.951', [])]), (4480, 390, 1.0, 0, false, [('HDMI-2', '1680x1050@59.954', [])])]" "[]"
-```
-
-Example retrieval of display configuration from Mutter using GJS
-
-```js
-// gdbus call --session --dest=org.gnome.Mutter.DisplayConfig --object-path /org/gnome/Mutter/DisplayConfig --method org.gnome.Mutter.DisplayConfig.GetResources
-
-const displayResources = await proxy.GetResourcesAsync()
-console.log("[toggle-displays] Display resources", displayResources)
-const [rawSerial, crtcs, outputs, modes] = displayResources
-
-// gdbus call --session --dest=org.gnome.Mutter.DisplayConfig --object-path /org/gnome/Mutter/DisplayConfig --method org.gnome.Mutter.DisplayConfig.GetCurrentState
-
-const currentState = await proxy.GetCurrentStateAsync()
-console.log("[toggle-displays] Current displays state", currentState)
-const [rawSerial, monitors, logicalMonitors, properties] = currentState
-```
-
-## Display configuration from GNOME settings
-
-Example reading of display configurations from `~/.config/monitors.xml`
-
-```bash
-python parse-monitors-config.py --indent
-```
+Some workarounds for hardware are described in [the documentation](https://www.ddcutil.com) of `ddcutil`.
