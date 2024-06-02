@@ -176,6 +176,7 @@ export default class ToggleDisplaysExtension extends Extension {
     }
 
     _loadLayout() {
+        // TODO: check if variable is set
         return this._settings.get_value("layout").recursiveUnpack()
     }
 
@@ -210,11 +211,11 @@ export default class ToggleDisplaysExtension extends Extension {
                 continue
             }
 
-            enabledDisplaysIds.add(`${display["model"]}#${display["serial"]}`)
+            enabledDisplaysIds.add(`${display.model}#${display.serial}`)
         }
 
         for (const ddcDisplay of ddcDisplays) {
-            if (!enabledDisplaysIds.has(`${ddcDisplay["model"]}#${ddcDisplay["serial"]}`)) {
+            if (!enabledDisplaysIds.has(`${ddcDisplay.model}#${ddcDisplay.serial}`)) {
                 continue
             }
 
@@ -274,6 +275,10 @@ export default class ToggleDisplaysExtension extends Extension {
 
         await this._ddcutilService._init()
         await this._rebuildSliders()
+
+        this._handlerId = this._displayConfig._proxy.connectSignal('MonitorsChanged', (_proxy, nameOwner, args) => {
+            // this._rebuildSliders()
+        })
     }
 
     enable() {
@@ -305,5 +310,7 @@ export default class ToggleDisplaysExtension extends Extension {
         this._displayAdjustmentIndicator = null
 
         this._settings = null
+
+        this._displayConfig._proxy.disconnectSignal(this._handlerId)
     }
 }
