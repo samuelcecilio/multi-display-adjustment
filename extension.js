@@ -218,7 +218,9 @@ export default class ToggleDisplaysExtension extends Extension {
 
         let slidersDisplaysIds = setIntersection(ddcCapableDisplayIds, enabledDisplaysIds)
 
-        if (areArraysEqual(Array.from(this._previousSlidersDisplaysIds), Array.from(slidersDisplaysIds))) {
+        devLog("[toggle-displays] previous slider ids", "slider ids", Array.from(this._previousSlidersDisplaysIds), Array.from(slidersDisplaysIds))
+
+        if (areArraysEqual(Array.from(this._previousSlidersDisplaysIds), Array.from(slidersDisplaysIds)) && this._displayAdjustmentIndicator.quickSettingsItems.length != 0) {
             return
         }
 
