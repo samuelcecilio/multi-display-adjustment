@@ -56,8 +56,6 @@ class ToggleDisplaysMenuToggle extends QuickMenuToggle {
                 display.enabled = !display.enabled
 
                 await menuToggle._displayConfig.applyLayout(displays)
-                menuToggle._refreshEntries(displays)
-                menuToggle._updateToggleState(displays)
             })
         }
     }
@@ -96,8 +94,6 @@ class ToggleDisplaysMenuToggle extends QuickMenuToggle {
             }
 
             await this._displayConfig.applyLayout(displays)
-            this._refreshEntries(displays)
-            this._updateToggleState(displays)
         })
     }
 
@@ -277,6 +273,8 @@ export default class ToggleDisplaysExtension extends Extension {
         await this._rebuildSliders()
 
         this._handlerId = this._displayConfig._proxy.connectSignal('MonitorsChanged', (_proxy, nameOwner, args) => {
+            this._toggleDisplaysMenu._refreshEntries(this._displays)
+            this._toggleDisplaysMenu._updateToggleState(this._displays)
             // this._rebuildSliders()
         })
     }
