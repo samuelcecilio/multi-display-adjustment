@@ -191,7 +191,8 @@ export default class ToggleDisplaysExtension extends Extension {
     _displayAdjustmentSliders = []
 
     async _destroyDisplayAdjustmentSliders() {
-        this._displayAdjustmentSliders.forEach(item => item.destroy())
+        this._displayAdjustmentIndicator.quickSettingsItems.forEach(item => item.destroy())
+        this._displayAdjustmentIndicator.quickSettingsItems = []
         this._displayAdjustmentSliders = []
     }
 
@@ -276,7 +277,7 @@ export default class ToggleDisplaysExtension extends Extension {
         this._handlerId = this._displayConfig._proxy.connectSignal('MonitorsChanged', (_proxy, nameOwner, args) => {
             this._toggleDisplaysMenu._refreshEntries(this._displays)
             this._toggleDisplaysMenu._updateToggleState(this._displays)
-            // this._rebuildSliders()
+            this._rebuildSliders()
         })
     }
 
