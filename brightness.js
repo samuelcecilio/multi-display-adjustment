@@ -1,7 +1,7 @@
 import GObject from 'gi://GObject'
 
 // import { PopupMenuSection } from 'resource:///org/gnome/shell/ui/popupMenu.js'
-import { QuickSlider, SystemIndicator } from 'resource:///org/gnome/shell/ui/quickSettings.js'
+import { QuickSlider } from 'resource:///org/gnome/shell/ui/quickSettings.js'
 
 const BrightnessSlider = GObject.registerClass(
 class BrightnessSlider extends QuickSlider {
@@ -48,14 +48,4 @@ class BrightnessSlider extends QuickSlider {
     }
 })
 
-const BrightnessIndicator = GObject.registerClass(
-class BrightnessIndicator extends SystemIndicator {
-    _init() {
-        super._init()
-
-        // this._indicator = this._addIndicator()
-        // this._indicator.iconName = 'video-display-symbolic'
-    }
-})
-
-export { BrightnessSlider, BrightnessIndicator }
+export { BrightnessSlider }

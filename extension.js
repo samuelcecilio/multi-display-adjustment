@@ -24,8 +24,8 @@ import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/
 import { QuickMenuToggle, SystemIndicator } from 'resource:///org/gnome/shell/ui/quickSettings.js'
 import { PopupMenuSection, PopupSeparatorMenuItem } from 'resource:///org/gnome/shell/ui/popupMenu.js'
 
-import { BrightnessIndicator, BrightnessSlider } from './brightness.js'
-import { ContrastIndicator, ContrastSlider } from './contrast.js'
+import { BrightnessSlider } from './brightness.js'
+import { ContrastSlider } from './contrast.js'
 import { devLog, emptyObject } from './code-convenience.js'
 import { DisplayConfig } from './display-config.js'
 import { DdcutilService } from './ddcutil-service.js'
@@ -130,6 +130,16 @@ class ToggleDisplaysIndicator extends SystemIndicator {
     }
 })
 
+const DisplayAdjustmentIndicator = GObject.registerClass(
+class DisplayAdjustmentIndicator extends SystemIndicator {
+    _init() {
+        super._init()
+
+        // this._indicator = this._addIndicator()
+        // this._indicator.iconName = 'video-display-symbolic'
+    }
+})
+
 export default class ToggleDisplaysExtension extends Extension {
     constructor(metadata) {
         super(metadata)
@@ -179,38 +189,32 @@ export default class ToggleDisplaysExtension extends Extension {
         }
     }
 
-    _brightnessSliders = []
-    _contrastSliders = []
+    _displayAdjustmentSliders = []
 
-    async _destroySliders() {
-        this._brightnessSliders.forEach(item => item.destroy())
-        this._brightnessSliders = []
-
-        this._contrastSliders.forEach(item => item.destroy())
-        this._contrastSliders = []
+    async _destroyDisplayAdjustmentSliders() {
+        this._displayAdjustmentSliders.forEach(item => item.destroy())
+        this._displayAdjustmentSliders = []
     }
 
     async _rebuildSliders() {
         const ddcDisplays = await this._ddcutilService._getDisplays()
 
-        this._destroySliders()
+        this._destroyDisplayAdjustmentSliders()
 
         for (const ddcDisplay of ddcDisplays) {
             const brightnessSlider = new BrightnessSlider(this, ddcDisplay.displayId)
-            this._brightnessSliders.push(brightnessSlider)
-            this._brightnessSlidersIndicator.quickSettingsItems.push(brightnessSlider)
-
-            brightnessSlider._fetchInitialBrightness()
-
+            this._displayAdjustmentSliders.push(brightnessSlider)
+            this._displayAdjustmentIndicator.quickSettingsItems.push(brightnessSlider)
+            
             const contrastSlider = new ContrastSlider(this, ddcDisplay.displayId)
-            this._contrastSliders.push(contrastSlider)
-            this._contrastSlidersIndicator.quickSettingsItems.push(contrastSlider)
-
+            this._displayAdjustmentSliders.push(contrastSlider)
+            this._displayAdjustmentIndicator.quickSettingsItems.push(contrastSlider)
+            
+            brightnessSlider._fetchInitialBrightness()
             contrastSlider._fetchInitialContrast()
         }
 
-        Main.panel.statusArea.quickSettings.addExternalIndicator(this._brightnessSlidersIndicator, 2)
-        Main.panel.statusArea.quickSettings.addExternalIndicator(this._contrastSlidersIndicator, 2)
+        Main.panel.statusArea.quickSettings.addExternalIndicator(this._displayAdjustmentIndicator, 2)
     }
 
     async _init() {
@@ -246,8 +250,7 @@ export default class ToggleDisplaysExtension extends Extension {
         this._toggleDisplaysIndicator.quickSettingsItems.push(this._toggleDisplaysMenu)
         Main.panel.statusArea.quickSettings.addExternalIndicator(this._toggleDisplaysIndicator)
 
-        this._brightnessSlidersIndicator = new BrightnessIndicator()
-        this._contrastSlidersIndicator = new ContrastIndicator()
+        this._displayAdjustmentIndicator = new DisplayAdjustmentIndicator()
 
         this._init()
 
@@ -261,15 +264,10 @@ export default class ToggleDisplaysExtension extends Extension {
         this._toggleDisplaysIndicator.destroy()
         this._toggleDisplaysIndicator = null
 
-        this._brightnessSlidersIndicator.quickSettingsItems.forEach(item => item.destroy())
-        this._contrastSlidersIndicator.quickSettingsItems.forEach(item => item.destroy())
-
-        this._destroySliders()
-
-        this._brightnessSlidersIndicator.destroy()
-        this._brightnessSlidersIndicator = null
-        this._contrastSlidersIndicator.destroy()
-        this._contrastSlidersIndicator = null
+        this._displayAdjustmentIndicator.quickSettingsItems.forEach(item => item.destroy())
+        this._destroyDisplayAdjustmentSliders()
+        this._displayAdjustmentIndicator.destroy()
+        this._displayAdjustmentIndicator = null
 
         this._settings = null
     }
