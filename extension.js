@@ -26,7 +26,7 @@ import { PopupMenuSection, PopupSeparatorMenuItem } from 'resource:///org/gnome/
 
 import { BrightnessSlider } from './brightness.js'
 import { ContrastSlider } from './contrast.js'
-import { areSetsEqual, devLog } from './code-convenience.js'
+import { areArraysEqual, areSetsEqual, devLog, setIntersection } from './code-convenience.js'
 import { DisplayConfig } from './display-config.js'
 import { DdcutilService } from './ddcutil-service.js'
 
@@ -142,6 +142,9 @@ export default class ToggleDisplaysExtension extends Extension {
 
         this._displayConfig = new DisplayConfig(metadata.path)
         this._ddcutilService = new DdcutilService()
+
+        this._displayAdjustmentSliders = []
+        this._previousSlidersDisplaysIds = new Set()
     }
 
     _storeLayout(displays) {
@@ -188,8 +191,6 @@ export default class ToggleDisplaysExtension extends Extension {
         return displays
     }
 
-    _displayAdjustmentSliders = []
-
     async _destroyDisplayAdjustmentSliders() {
         this._displayAdjustmentIndicator.quickSettingsItems.forEach(item => item.destroy())
         this._displayAdjustmentIndicator.quickSettingsItems = []
@@ -197,9 +198,13 @@ export default class ToggleDisplaysExtension extends Extension {
     }
 
     async _rebuildSliders() {
-        this._destroyDisplayAdjustmentSliders()
-
         const ddcDisplays = await this._ddcutilService._getDisplays()
+
+        let ddcCapableDisplayIds = new Set()
+
+        for (const ddcDisplay of ddcDisplays) {
+            ddcCapableDisplayIds.add(`${ddcDisplay.model}#${ddcDisplay.serial}`)
+        }
 
         let enabledDisplaysIds = new Set()
 
@@ -211,8 +216,18 @@ export default class ToggleDisplaysExtension extends Extension {
             enabledDisplaysIds.add(`${display.model}#${display.serial}`)
         }
 
+        let slidersDisplaysIds = setIntersection(ddcCapableDisplayIds, enabledDisplaysIds)
+
+        if (areArraysEqual(Array.from(this._previousSlidersDisplaysIds), Array.from(slidersDisplaysIds))) {
+            return
+        }
+
+        this._destroyDisplayAdjustmentSliders()
+
+        this._previousSlidersDisplaysIds = slidersDisplaysIds
+
         for (const ddcDisplay of ddcDisplays) {
-            if (!enabledDisplaysIds.has(`${ddcDisplay.model}#${ddcDisplay.serial}`)) {
+            if (!slidersDisplaysIds.has(`${ddcDisplay.model}#${ddcDisplay.serial}`)) {
                 continue
             }
 
