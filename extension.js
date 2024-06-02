@@ -26,7 +26,7 @@ import { PopupMenuSection, PopupSeparatorMenuItem } from 'resource:///org/gnome/
 
 import { BrightnessSlider } from './brightness.js'
 import { ContrastSlider } from './contrast.js'
-import { devLog, emptyObject } from './code-convenience.js'
+import { areSetsEqual, devLog } from './code-convenience.js'
 import { DisplayConfig } from './display-config.js'
 import { DdcutilService } from './ddcutil-service.js'
 
@@ -35,7 +35,7 @@ class ToggleDisplaysMenuToggle extends QuickMenuToggle {
     _refreshEntries(displays) {
         this._itemsSection.removeAll()
 
-        const menu = this
+        const menuToggle = this
 
         for (const [key, display] of Object.entries(displays)) {
             let label = display.model
@@ -55,9 +55,9 @@ class ToggleDisplaysMenuToggle extends QuickMenuToggle {
 
                 display.enabled = !display.enabled
 
-                await menu._displayConfig.applyLayout(displays)
-                menu._refreshEntries(displays)
-                menu._updateToggleState(displays)
+                await menuToggle._displayConfig.applyLayout(displays)
+                menuToggle._refreshEntries(displays)
+                menuToggle._updateToggleState(displays)
             })
         }
     }
@@ -179,14 +179,16 @@ export default class ToggleDisplaysExtension extends Extension {
         return this._settings.get_value("layout").recursiveUnpack()
     }
 
-    async _correctLayout() {
+    async _correctLayout(displays) {
         for (const display of await this._displayConfig._getLayoutFromMutter()) {
             const key = display.model + "@" + display.connector
 
-            if (key in this._displays) {
-                this._displays[key].enabled = display.enabled
+            if (key in displays) {
+                displays[key].enabled = display.enabled
             }
         }
+
+        return displays
     }
 
     _displayAdjustmentSliders = []
@@ -197,11 +199,25 @@ export default class ToggleDisplaysExtension extends Extension {
     }
 
     async _rebuildSliders() {
-        const ddcDisplays = await this._ddcutilService._getDisplays()
-
         this._destroyDisplayAdjustmentSliders()
 
+        const ddcDisplays = await this._ddcutilService._getDisplays()
+
+        let enabledDisplaysIds = new Set()
+
+        for (const [key, display] of Object.entries(this._displays)) {
+            if (!display["enabled"]) {
+                continue
+            }
+
+            enabledDisplaysIds.add(`${display["model"]}#${display["serial"]}`)
+        }
+
         for (const ddcDisplay of ddcDisplays) {
+            if (!enabledDisplaysIds.has(`${ddcDisplay["model"]}#${ddcDisplay["serial"]}`)) {
+                continue
+            }
+
             const brightnessSlider = new BrightnessSlider(this, ddcDisplay.displayId)
             this._displayAdjustmentSliders.push(brightnessSlider)
             this._displayAdjustmentIndicator.quickSettingsItems.push(brightnessSlider)
@@ -217,22 +233,41 @@ export default class ToggleDisplaysExtension extends Extension {
         Main.panel.statusArea.quickSettings.addExternalIndicator(this._displayAdjustmentIndicator, 2)
     }
 
-    async _init() {
+    async _getLastMatchingDisplayConfig() {
         await this._displayConfig.init()
-        this._displays = await this._displayConfig.getDisplays()
+        let displays = await this._displayConfig.getDisplays()
 
-        if (!emptyObject(this._displays)) {
-            devLog("[toggle-displays] Storing monitor config", this._displays)
+        const allDisplays = await this._displayConfig._getLayoutFromMutter()
+        let allDisplaysIds = new Set()
 
-            this._storeLayout(this._displays)
+        for (const display of allDisplays) {
+            allDisplaysIds.add(`${display["model"]}@${display["connector"]}`)
+        }
+
+        let enabledDisplaysIds = new Set()
+
+        for (const [key, display] of Object.entries(displays)) {
+            enabledDisplaysIds.add(key)
+        }
+
+        if (areSetsEqual(enabledDisplaysIds, allDisplaysIds) && !enabledDisplaysIds.has("MetaMonitor@LVDS1")) {
+            devLog("[toggle-displays] Storing monitor config", displays)
+
+            this._storeLayout(displays)
         } else {
             devLog("[toggle-displays] No matching layout have been found, restoring from storage")
 
-            this._displays = this._loadLayout()
-            await this._correctLayout()
+            displays = this._loadLayout()
+            displays = await this._correctLayout(displays)
 
-            devLog("[toggle-displays] Restored layout", this._displays)
+            devLog("[toggle-displays] Restored layout", displays)
         }
+
+        return displays
+    }
+
+    async _init() {
+        this._displays = await this._getLastMatchingDisplayConfig()
 
         this._toggleDisplaysMenu._refreshEntries(this._displays)
         this._toggleDisplaysMenu._setupToggleAction(this._displays)
