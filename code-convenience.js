@@ -21,6 +21,14 @@ function devLog(...args) {
     // log(...args)
 }
 
+function areArraysEqual(array, otherArray) {
+    return JSON.stringify(array) == JSON.stringify(otherArray)
+}
+
+function setIntersection(set, otherSet) {
+    return new Set([...set].filter(item => otherSet.has(item)))
+}
+
 /**
  * Development inside of nested session is limited
  *   dbus-run-session -- gnome-shell --nested
@@ -33,4 +41,4 @@ function devOverrideOutputNames(outputNames) {
     return outputNames
 }
 
-export { areSetsEqual, devLog, devOverrideOutputNames, emptyObject, getPossibleBoolean, startsWith }
+export { areArraysEqual, areSetsEqual, devLog, devOverrideOutputNames, emptyObject, getPossibleBoolean, setIntersection, startsWith }
