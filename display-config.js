@@ -196,7 +196,7 @@ class DisplayConfig {
 
         const currentState = await this._proxy.GetCurrentStateAsync()
 
-        let layout = []
+        let layout = { }
 
         for (const monitor of currentState[1]) {
             const monitorSpec = monitor[0]
@@ -214,7 +214,7 @@ class DisplayConfig {
                 const modeProperties = mode[6]
 
                 if (getPossibleBoolean(modeProperties, "is-preferred")) {
-                    layout.push({
+                    layout[connector] = {
                         connector,
                         model,
                         serial,
@@ -223,16 +223,29 @@ class DisplayConfig {
                         rate: mode[3],
                         rawRate: mode[0].split("@")[1],
                         enabled: getPossibleBoolean(modeProperties, "is-current")
-                    })
+                    }
 
                     break
                 }
             }
         }
 
-        devLog("[toggle-displays] Retrieved displays layout from Mutter", layout)
+        for (const logicalMonitor of currentState[2]) {
+            const x = logicalMonitor[0]
+            const y = logicalMonitor[1]
+            const scale = logicalMonitor[2]
+            const primary = logicalMonitor[4]
+            const connector = logicalMonitor[5][0][0]
 
-        return layout
+            layout[connector]["x"] = x
+            layout[connector]["y"] = y
+            layout[connector]["scale"] = scale
+            layout[connector]["primary"] = primary
+        }
+
+        log("[toggle-displays] Retrieved displays layout from Mutter", Object.values(layout))
+
+        return Object.values(layout)
     }
 
     _getCurrentConnectors(layout) {
