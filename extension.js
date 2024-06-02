@@ -25,6 +25,7 @@ import { QuickMenuToggle, SystemIndicator } from 'resource:///org/gnome/shell/ui
 import { PopupMenuSection, PopupSeparatorMenuItem } from 'resource:///org/gnome/shell/ui/popupMenu.js'
 
 import { BrightnessIndicator, BrightnessSlider } from './brightness.js'
+import { ContrastIndicator, ContrastSlider } from './contrast.js'
 import { devLog, emptyObject } from './code-convenience.js'
 import { DisplayConfig } from './display-config.js'
 import { DdcutilService } from './ddcutil-service.js'
@@ -179,10 +180,14 @@ export default class ToggleDisplaysExtension extends Extension {
     }
 
     _brightnessSliders = []
+    _contrastSliders = []
 
     async _destroySliders() {
         this._brightnessSliders.forEach(item => item.destroy())
         this._brightnessSliders = []
+
+        this._contrastSliders.forEach(item => item.destroy())
+        this._contrastSliders = []
     }
 
     async _rebuildSliders() {
@@ -191,14 +196,21 @@ export default class ToggleDisplaysExtension extends Extension {
         this._destroySliders()
 
         for (const ddcDisplay of ddcDisplays) {
-            const slider = new BrightnessSlider(this, ddcDisplay.displayId)
-            this._brightnessSliders.push(slider)
-            this._brightnessSlidersIndicator.quickSettingsItems.push(slider)
+            const brightnessSlider = new BrightnessSlider(this, ddcDisplay.displayId)
+            this._brightnessSliders.push(brightnessSlider)
+            this._brightnessSlidersIndicator.quickSettingsItems.push(brightnessSlider)
 
-            slider._fetchInitialBrightness()
+            brightnessSlider._fetchInitialBrightness()
+
+            const contrastSlider = new ContrastSlider(this, ddcDisplay.displayId)
+            this._contrastSliders.push(contrastSlider)
+            this._contrastSlidersIndicator.quickSettingsItems.push(contrastSlider)
+
+            contrastSlider._fetchInitialContrast()
         }
 
         Main.panel.statusArea.quickSettings.addExternalIndicator(this._brightnessSlidersIndicator, 2)
+        Main.panel.statusArea.quickSettings.addExternalIndicator(this._contrastSlidersIndicator, 2)
     }
 
     async _init() {
@@ -235,6 +247,7 @@ export default class ToggleDisplaysExtension extends Extension {
         Main.panel.statusArea.quickSettings.addExternalIndicator(this._toggleDisplaysIndicator)
 
         this._brightnessSlidersIndicator = new BrightnessIndicator()
+        this._contrastSlidersIndicator = new ContrastIndicator()
 
         this._init()
 
@@ -249,9 +262,14 @@ export default class ToggleDisplaysExtension extends Extension {
         this._toggleDisplaysIndicator = null
 
         this._brightnessSlidersIndicator.quickSettingsItems.forEach(item => item.destroy())
+        this._contrastSlidersIndicator.quickSettingsItems.forEach(item => item.destroy())
+
         this._destroySliders()
+
         this._brightnessSlidersIndicator.destroy()
         this._brightnessSlidersIndicator = null
+        this._contrastSlidersIndicator.destroy()
+        this._contrastSlidersIndicator = null
 
         this._settings = null
     }

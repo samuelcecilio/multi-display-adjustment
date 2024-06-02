@@ -219,6 +219,22 @@ class DdcutilService {
         await this._proxy.SetVcpAsync(displayId, "", 16, newValue, 0)
     }
 
+    async _getContrast(displayId) {
+        // gdbus call --session --dest=com.ddcutil.DdcutilService --object-path /com/ddcutil/DdcutilObject --method com.ddcutil.DdcutilInterface.GetVcp 2 "" 16 0
+
+        const result = await this._proxy.GetVcpAsync(displayId, "", 18, 0)
+        const current = result[0]
+        const max = result[1]
+    
+        return { current, max }
+    }
+
+    async _setContrast(displayId, newValue) {
+        // gdbus call --session --dest=com.ddcutil.DdcutilService --object-path /com/ddcutil/DdcutilObject --method com.ddcutil.DdcutilInterface.SetVcp 2 "" 16 35 0
+
+        await this._proxy.SetVcpAsync(displayId, "", 18, newValue, 0)
+    }
+
     // async _toggleDynamicSleep(enable) {
     //     this._proxy.DdcutilDynamicSleep = enable
     // }
