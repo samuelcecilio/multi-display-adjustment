@@ -4,12 +4,12 @@ import { QuickSlider } from 'resource:///org/gnome/shell/ui/quickSettings.js'
 
 const ContrastSlider = GObject.registerClass(
 class ContrastSlider extends QuickSlider {
-    _init(extension, displayId) {
+    _init(ddcutilService, displayId) {
         super._init({
             iconName: 'camera-iso-symbolic'
         })
 
-        this._extension = extension
+        this._ddcutilService = ddcutilService
         this._displayId = displayId
         this._maxValue = 100
 
@@ -18,7 +18,7 @@ class ContrastSlider extends QuickSlider {
     }
 
     async _fetchInitialContrast() {
-        const contrast = await this._extension._ddcutilService._getContrast(this._displayId)
+        const contrast = await this._ddcutilService._getContrast(this._displayId)
 
         this._maxValue = contrast.max
 
@@ -31,7 +31,7 @@ class ContrastSlider extends QuickSlider {
 
         if (percent != this._previousPercent) {
             this._previousPercent = percent
-            this._extension._ddcutilService._setContrast(this._displayId, percent)
+            this._ddcutilService._setContrast(this._displayId, percent)
         }
     }
 

@@ -215,12 +215,13 @@ export default class ToggleDisplaysExtension extends Extension {
                 continue
             }
 
-            const brightnessSlider = new BrightnessSlider(this, ddcDisplay.displayId)
+            const brightnessSlider = new BrightnessSlider(this._ddcutilService, ddcDisplay.displayId)
             this._displayAdjustmentSliders.push(brightnessSlider)
-            this._displayAdjustmentIndicator.quickSettingsItems.push(brightnessSlider)
             
-            const contrastSlider = new ContrastSlider(this, ddcDisplay.displayId)
+            const contrastSlider = new ContrastSlider(this._ddcutilService, ddcDisplay.displayId)
             this._displayAdjustmentSliders.push(contrastSlider)
+
+            this._displayAdjustmentIndicator.quickSettingsItems.push(brightnessSlider)
             this._displayAdjustmentIndicator.quickSettingsItems.push(contrastSlider)
             
             brightnessSlider._fetchInitialBrightness()

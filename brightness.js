@@ -5,13 +5,13 @@ import { QuickSlider } from 'resource:///org/gnome/shell/ui/quickSettings.js'
 
 const BrightnessSlider = GObject.registerClass(
 class BrightnessSlider extends QuickSlider {
-    _init(extension, displayId) {
+    _init(ddcutilService, displayId) {
         super._init({
             iconName: 'display-brightness-symbolic',
             // menuEnabled: true
         })
 
-        this._extension = extension
+        this._ddcutilService = ddcutilService
         this._displayId = displayId
         this._maxValue = 100
 
@@ -24,7 +24,7 @@ class BrightnessSlider extends QuickSlider {
     }
 
     async _fetchInitialBrightness() {
-        const brightness = await this._extension._ddcutilService._getBrightness(this._displayId)
+        const brightness = await this._ddcutilService._getBrightness(this._displayId)
 
         this._maxValue = brightness.max
 
@@ -37,7 +37,7 @@ class BrightnessSlider extends QuickSlider {
 
         if (percent != this._previousPercent) {
             this._previousPercent = percent
-            this._extension._ddcutilService._setBrightness(this._displayId, percent)
+            this._ddcutilService._setBrightness(this._displayId, percent)
         }
     }
 
