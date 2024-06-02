@@ -248,6 +248,22 @@ class DisplayConfig {
         return Object.values(layout)
     }
 
+    async _getLayoutFromMutterMap() {
+        const layout = await this._getLayoutFromMutter()
+
+        let layoutMap = {}
+
+        for (const display of layout) {
+            if (!display["enabled"]) {
+                continue
+            }
+
+            layoutMap[`${display["model"]}@${display["connector"]}`] = display
+        }
+
+        return layoutMap
+    }
+
     _getCurrentConnectors(layout) {
         devLog("[toggle-displays] Retrieving connectors...")
 
@@ -265,7 +281,8 @@ class DisplayConfig {
     }
 
     async getDisplays() {
-        return await this._getLayoutFromConfigFile(this._getCurrentConnectors(await this._getLayoutFromMutter()))
+        // return await this._getLayoutFromConfigFile(this._getCurrentConnectors(await this._getLayoutFromMutter()))
+        return await this._getLayoutFromMutterMap()
     }
 
     /** Configure displays through Mutter. */
