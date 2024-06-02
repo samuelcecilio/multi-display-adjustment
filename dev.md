@@ -4,12 +4,9 @@
 
 ```bash
 cd ~/.local/share/gnome-shell/extensions
-git clone https://gitlab.com/w8jcik/toggle-displays.git displays@w8jcik.gitlab.com
-cd displays@w8jcik.gitlab.com
-glib-compile-schemas schemas/
+git clone git@gitlab.com:w8jcik/toggle-displays.git displays@w8jcik.gitlab.com
+glib-compile-schemas displays@w8jcik.gitlab.com/schemas/
 ```
-
-`git clone git@gitlab.com:w8jcik/toggle-displays.git` for development.
 
 ## Start
 
