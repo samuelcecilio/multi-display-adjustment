@@ -28,8 +28,8 @@ import { DisplayConfigService } from './display-config-service.js'
 import { DdcutilService } from './ddcutil-service.js'
 
 
-const DisplayAdjustmentsIndicator = GObject.registerClass(
-class DisplayAdjustmentsIndicator extends SystemIndicator {
+const DisplaysAdjustmentsIndicator = GObject.registerClass(
+class DisplaysAdjustmentsIndicator extends SystemIndicator {
     _init() {
         super._init()
     }
@@ -59,8 +59,8 @@ export default class DisplaysAdjustmentsExtension extends Extension {
     }
 
     async _destroyDisplayAdjustmentSliders() {
-        this._displayAdjustmentsIndicator.quickSettingsItems.forEach(item => item.destroy())
-        this._displayAdjustmentsIndicator.quickSettingsItems = []
+        this._displaysAdjustmentsIndicator.quickSettingsItems.forEach(item => item.destroy())
+        this._displaysAdjustmentsIndicator.quickSettingsItems = []
         this._displayAdjustmentSliders = []
     }
 
@@ -88,7 +88,7 @@ export default class DisplaysAdjustmentsExtension extends Extension {
 
         devLog("[displays-adjustments] previous slider ids", Array.from(this._previousSlidersDisplaysIds), "slider ids", Array.from(slidersDisplaysIds))
 
-        if (areArraysEqual(Array.from(this._previousSlidersDisplaysIds), Array.from(slidersDisplaysIds)) && this._displayAdjustmentsIndicator.quickSettingsItems.length != 0) {
+        if (areArraysEqual(Array.from(this._previousSlidersDisplaysIds), Array.from(slidersDisplaysIds)) && this._displaysAdjustmentsIndicator.quickSettingsItems.length != 0) {
             return
         }
 
@@ -107,20 +107,20 @@ export default class DisplaysAdjustmentsExtension extends Extension {
             const contrastSlider = new ContrastSlider(this._ddcutilService, ddcDisplay.displayId)
             this._displayAdjustmentSliders.push(contrastSlider)
 
-            this._displayAdjustmentsIndicator.quickSettingsItems.push(brightnessSlider)
-            this._displayAdjustmentsIndicator.quickSettingsItems.push(contrastSlider)
+            this._displaysAdjustmentsIndicator.quickSettingsItems.push(brightnessSlider)
+            this._displaysAdjustmentsIndicator.quickSettingsItems.push(contrastSlider)
             
             brightnessSlider._fetchInitialBrightness()
             contrastSlider._fetchInitialContrast()
         }
 
-        Main.panel.statusArea.quickSettings.addExternalIndicator(this._displayAdjustmentsIndicator, 2)
+        Main.panel.statusArea.quickSettings.addExternalIndicator(this._displaysAdjustmentsIndicator, 2)
     }
 
     async enable() {
         devLog("[displays-adjustments] Starting extension...")
 
-        this._displayAdjustmentsIndicator = new DisplayAdjustmentsIndicator()
+        this._displaysAdjustmentsIndicator = new DisplaysAdjustmentsIndicator()
 
         await this._displayConfigService.init()
         await this._ddcutilService._init()
@@ -136,8 +136,8 @@ export default class DisplaysAdjustmentsExtension extends Extension {
 
     async disable() {
         this._destroyDisplayAdjustmentSliders()
-        this._displayAdjustmentsIndicator.destroy()
-        this._displayAdjustmentsIndicator = null
+        this._displaysAdjustmentsIndicator.destroy()
+        this._displaysAdjustmentsIndicator = null
 
         this._displayConfigService._proxy.disconnectSignal(this._handlerId)
     }
