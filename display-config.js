@@ -260,7 +260,7 @@ class DisplayConfig {
             layout[connector]["primary"] = primary
         }
 
-        log("[displays-adjustments] Retrieved displays layout from Mutter", Object.values(layout))
+        devLog("[displays-adjustments] Retrieved displays layout from Mutter", Object.values(layout))
 
         return Object.values(layout)
     }

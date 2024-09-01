@@ -28,14 +28,14 @@ import { DisplayConfig } from './display-config.js'
 import { DdcutilService } from './ddcutil-service.js'
 
 
-const DisplayAdjustmentIndicator = GObject.registerClass(
-class DisplayAdjustmentIndicator extends SystemIndicator {
+const DisplayAdjustmentsIndicator = GObject.registerClass(
+class DisplayAdjustmentsIndicator extends SystemIndicator {
     _init() {
         super._init()
     }
 })
 
-export default class ToggleDisplaysExtension extends Extension {
+export default class DisplaysAdjustmentsExtension extends Extension {
     constructor(metadata) {
         super(metadata)
 
@@ -59,8 +59,8 @@ export default class ToggleDisplaysExtension extends Extension {
     }
 
     async _destroyDisplayAdjustmentSliders() {
-        this._displayAdjustmentIndicator.quickSettingsItems.forEach(item => item.destroy())
-        this._displayAdjustmentIndicator.quickSettingsItems = []
+        this._displayAdjustmentsIndicator.quickSettingsItems.forEach(item => item.destroy())
+        this._displayAdjustmentsIndicator.quickSettingsItems = []
         this._displayAdjustmentSliders = []
     }
 
@@ -87,7 +87,7 @@ export default class ToggleDisplaysExtension extends Extension {
 
         devLog("[displays-adjustments] previous slider ids", "slider ids", Array.from(this._previousSlidersDisplaysIds), Array.from(slidersDisplaysIds))
 
-        if (areArraysEqual(Array.from(this._previousSlidersDisplaysIds), Array.from(slidersDisplaysIds)) && this._displayAdjustmentIndicator.quickSettingsItems.length != 0) {
+        if (areArraysEqual(Array.from(this._previousSlidersDisplaysIds), Array.from(slidersDisplaysIds)) && this._displayAdjustmentsIndicator.quickSettingsItems.length != 0) {
             return
         }
 
@@ -106,14 +106,14 @@ export default class ToggleDisplaysExtension extends Extension {
             const contrastSlider = new ContrastSlider(this._ddcutilService, ddcDisplay.displayId)
             this._displayAdjustmentSliders.push(contrastSlider)
 
-            this._displayAdjustmentIndicator.quickSettingsItems.push(brightnessSlider)
-            this._displayAdjustmentIndicator.quickSettingsItems.push(contrastSlider)
+            this._displayAdjustmentsIndicator.quickSettingsItems.push(brightnessSlider)
+            this._displayAdjustmentsIndicator.quickSettingsItems.push(contrastSlider)
             
             brightnessSlider._fetchInitialBrightness()
             contrastSlider._fetchInitialContrast()
         }
 
-        Main.panel.statusArea.quickSettings.addExternalIndicator(this._displayAdjustmentIndicator, 2)
+        Main.panel.statusArea.quickSettings.addExternalIndicator(this._displayAdjustmentsIndicator, 2)
     }
 
     async _getLastMatchingDisplayConfig() {
@@ -136,7 +136,10 @@ export default class ToggleDisplaysExtension extends Extension {
         return displays
     }
 
-    async _init() {
+    async enable() {
+        devLog("[displays-adjustments] Starting extension...")
+
+        this._displayAdjustmentsIndicator = new DisplayAdjustmentsIndicator()
         this._displays = await this._getLastMatchingDisplayConfig()
 
         await this._ddcutilService._init()
@@ -145,23 +148,14 @@ export default class ToggleDisplaysExtension extends Extension {
         this._handlerId = this._displayConfig._proxy.connectSignal('MonitorsChanged', (_proxy, nameOwner, args) => {
             this._rebuildSliders()
         })
-    }
-
-    enable() {
-        devLog("[displays-adjustments] Starting extension...")
-
-        this._displayAdjustmentIndicator = new DisplayAdjustmentIndicator()
-
-        this._init()
 
         devLog("[displays-adjustments] Done starting extension")
     }
 
-    disable() {
-        this._displayAdjustmentIndicator.quickSettingsItems.forEach(item => item.destroy())
+    async disable() {
         this._destroyDisplayAdjustmentSliders()
-        this._displayAdjustmentIndicator.destroy()
-        this._displayAdjustmentIndicator = null
+        this._displayAdjustmentsIndicator.destroy()
+        this._displayAdjustmentsIndicator = null
 
         this._displayConfig._proxy.disconnectSignal(this._handlerId)
     }
