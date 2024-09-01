@@ -20,19 +20,9 @@ import Gio from 'gi://Gio'
 import { devLog, getPossibleBoolean, startsWith } from './code-convenience.js'
 
 /**
- * Retrieves layout of displays using Mutter interface called DisplayConfig
- * and GNOME configuration file stored in ~/.config/monitors.xml.
+ * Retrieves and sets layout of displays using Mutter interface called DisplayConfig.
  * 
- * Using only current state:
- *  - Disabled displays are missing x/y shifts.
- * 
- * Using only configuration file:
- *  - Multiple configurations are available.  
- *    List of connected displays is needed to pick the right one.
- *  - Doesn't tell which display is on.
- *
- * As a consequence both sources need to be used to retrieve current layout
- * of the displays.
+ * This extension is using only the connector names, enabled/disabled state and virtual desktop x/y coordinates.
  */
 class DisplayConfigService {
     constructor(extensionLocation) {
@@ -136,7 +126,7 @@ class DisplayConfigService {
         </node>`
 
     async _initProxy() {
-        devLog("[displays-adjustments] Initializing DBus proxy...")
+        devLog("[displays-adjustments] Initializing DisplayConfig DBus proxy...")
 
         const TestProxy = Gio.DBusProxy.makeProxyWrapper(this._displayConfigInterface)
 
@@ -154,7 +144,7 @@ class DisplayConfigService {
             )
         })
 
-        devLog("[displays-adjustments] DBus proxy is ready")
+        devLog("[displays-adjustments] DisplayConfig DBus proxy is ready")
     }
 
     async init() {
