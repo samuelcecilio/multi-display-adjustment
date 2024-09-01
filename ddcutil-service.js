@@ -1,5 +1,6 @@
 import Gio from 'gi://Gio'
 
+
 class DdcutilService {
     // From github.com/digitaltrails/ddcutil-service/blob/main/ddcutil-service.c
     _ddcutilInterface = `

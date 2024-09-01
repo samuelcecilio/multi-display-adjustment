@@ -3,6 +3,7 @@ import GObject from 'gi://GObject'
 // import { PopupMenuSection } from 'resource:///org/gnome/shell/ui/popupMenu.js'
 import { QuickSlider } from 'resource:///org/gnome/shell/ui/quickSettings.js'
 
+
 const BrightnessSlider = GObject.registerClass(
 class BrightnessSlider extends QuickSlider {
     _init(ddcutilService, displayId) {

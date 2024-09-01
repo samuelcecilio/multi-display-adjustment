@@ -2,6 +2,7 @@ import GObject from 'gi://GObject'
 
 import { QuickSlider } from 'resource:///org/gnome/shell/ui/quickSettings.js'
 
+
 const ContrastSlider = GObject.registerClass(
 class ContrastSlider extends QuickSlider {
     _init(ddcutilService, displayId) {
