@@ -65,6 +65,7 @@ export default class DisplaysAdjustmentsExtension extends Extension {
     }
 
     async _rebuildSliders() {
+        const mutterDisplays = await this._displayConfig.getDisplays()
         const ddcDisplays = await this._ddcutilService._getDisplays()
 
         let ddcCapableDisplayIds = new Set()
@@ -75,7 +76,7 @@ export default class DisplaysAdjustmentsExtension extends Extension {
 
         let enabledDisplaysIds = new Set()
 
-        for (const [key, display] of Object.entries(this._displays)) {
+        for (const [key, display] of Object.entries(mutterDisplays)) {
             if (!display["enabled"]) {
                 continue
             }
@@ -116,38 +117,19 @@ export default class DisplaysAdjustmentsExtension extends Extension {
         Main.panel.statusArea.quickSettings.addExternalIndicator(this._displayAdjustmentsIndicator, 2)
     }
 
-    async _getLastMatchingDisplayConfig() {
-        await this._displayConfig.init()
-        let displays = await this._displayConfig.getDisplays()
-
-        const allDisplays = await this._displayConfig._getLayoutFromMutter()
-        let allDisplaysIds = new Set()
-
-        for (const display of allDisplays) {
-            allDisplaysIds.add(`${display["model"]}@${display["connector"]}`)
-        }
-
-        let enabledDisplaysIds = new Set()
-
-        for (const [key, display] of Object.entries(displays)) {
-            enabledDisplaysIds.add(key)
-        }
-
-        return displays
-    }
-
     async enable() {
         devLog("[displays-adjustments] Starting extension...")
 
         this._displayAdjustmentsIndicator = new DisplayAdjustmentsIndicator()
-        this._displays = await this._getLastMatchingDisplayConfig()
 
+        await this._displayConfig.init()
         await this._ddcutilService._init()
-        await this._rebuildSliders()
 
-        this._handlerId = this._displayConfig._proxy.connectSignal('MonitorsChanged', (_proxy, nameOwner, args) => {
+        this._handlerId = this._displayConfig._proxy.connectSignal('MonitorsChanged', (proxy, nameOwner, args) => {
             this._rebuildSliders()
         })
+
+        await this._rebuildSliders()
 
         devLog("[displays-adjustments] Done starting extension")
     }
