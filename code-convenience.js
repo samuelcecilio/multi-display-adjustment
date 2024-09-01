@@ -23,10 +23,6 @@ function getPossibleBoolean(variable, _property) {
     return false
 }
 
-function emptyObject(object_) {
-    return Object.keys(object_).length === 0
-}
-
 function startsWith(text, beginning) {
     return text.substr(0, beginning.length) == beginning
 }
@@ -44,16 +40,4 @@ function setIntersection(set, otherSet) {
     return new Set([...set].filter(item => otherSet.has(item)))
 }
 
-/**
- * Development inside of nested session is limited
- *   dbus-run-session -- gnome-shell --nested
- * 
- * It is not possible to control the displays. Yet the GUI can partially work
- * if correct list of displays and corresponding connectors is provided.
- */
-function devOverrideOutputNames(outputNames) {
-    // return ["EV2436W@DP-1", "DELL U2711@DP-2", "DELL 2209WA@HDMI-2"]
-    return outputNames
-}
-
-export { areArraysEqual, devLog, devOverrideOutputNames, emptyObject, getPossibleBoolean, setIntersection, startsWith }
+export { areArraysEqual, devLog, getPossibleBoolean, setIntersection, startsWith }

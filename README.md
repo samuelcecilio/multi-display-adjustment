@@ -2,6 +2,8 @@
 
 Offers sliders to control external displays' brightness and contrast through DDC/CI.
 
+With multiple displays, multiple sliders are available.
+
 ![](./screenshot.png)
 
 Extension relies on `ddcutil-service`. Installation process of `ddcutil-service` is quick and non-intrusive. `ddcutil-service` allows more responsive communication with the displays than calling `ddcutil`.
