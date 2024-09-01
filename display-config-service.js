@@ -25,10 +25,6 @@ import { devLog, getPossibleBoolean, startsWith } from './code-convenience.js'
  * This extension is using only the connector names, enabled/disabled state and virtual desktop x/y coordinates.
  */
 class DisplayConfigService {
-    constructor(extensionLocation) {
-        this._extensionLocation = extensionLocation
-    }
-
     /**
      * Mutter offers DBus interface to read and write configuration of displays.
      * Code below should be able to retrieve description of this interface.

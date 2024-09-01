@@ -37,7 +37,7 @@ export default class DisplaysAdjustmentsExtension extends Extension {
     constructor(metadata) {
         super(metadata)
 
-        this._displayConfigService = new DisplayConfigService(metadata.path)
+        this._displayConfigService = new DisplayConfigService()
         this._ddcutilService = new DdcutilService()
 
         this._previousSlidersDisplaysIds = new Set()
