@@ -30,9 +30,7 @@ import { DdcutilService } from './ddcutil-service.js'
 
 const DisplaysAdjustmentsIndicator = GObject.registerClass(
 class DisplaysAdjustmentsIndicator extends SystemIndicator {
-    _init() {
-        super._init()
-    }
+    
 })
 
 export default class DisplaysAdjustmentsExtension extends Extension {
@@ -42,7 +40,6 @@ export default class DisplaysAdjustmentsExtension extends Extension {
         this._displayConfigService = new DisplayConfigService(metadata.path)
         this._ddcutilService = new DdcutilService()
 
-        this._displayAdjustmentSliders = []
         this._previousSlidersDisplaysIds = new Set()
     }
 
@@ -61,7 +58,6 @@ export default class DisplaysAdjustmentsExtension extends Extension {
     async _destroySliders() {
         this._indicator.quickSettingsItems.forEach(item => item.destroy())
         this._indicator.quickSettingsItems = []
-        this._displayAdjustmentSliders = []
     }
 
     async _rebuildSliders() {
@@ -102,10 +98,7 @@ export default class DisplaysAdjustmentsExtension extends Extension {
             }
 
             const brightnessSlider = new BrightnessSlider(this._ddcutilService, ddcDisplay.displayId)
-            this._displayAdjustmentSliders.push(brightnessSlider)
-            
             const contrastSlider = new ContrastSlider(this._ddcutilService, ddcDisplay.displayId)
-            this._displayAdjustmentSliders.push(contrastSlider)
 
             this._indicator.quickSettingsItems.push(brightnessSlider)
             this._indicator.quickSettingsItems.push(contrastSlider)
