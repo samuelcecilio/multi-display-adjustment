@@ -1,6 +1,5 @@
 import GObject from 'gi://GObject'
 
-// import { PopupMenuSection } from 'resource:///org/gnome/shell/ui/popupMenu.js'
 import { QuickSlider } from 'resource:///org/gnome/shell/ui/quickSettings.js'
 
 
@@ -8,8 +7,7 @@ const BrightnessSlider = GObject.registerClass(
 class BrightnessSlider extends QuickSlider {
     _init(ddcutilService, displayId) {
         super._init({
-            iconName: 'display-brightness-symbolic',
-            // menuEnabled: true
+            iconName: 'display-brightness-symbolic'
         })
 
         this._ddcutilService = ddcutilService
@@ -18,10 +16,6 @@ class BrightnessSlider extends QuickSlider {
 
         this._sliderChangedId = this.slider.connect('notify::value', this._sliderChanged.bind(this));
         this.slider.accessible_name = _('Brightness')
-
-        // this._popupMenuSection = new PopupMenuSection()
-        // this.menu.addMenuItem(this._popupMenuSection)
-        // this.menu.setHeader('display-symbolic', _('Display'))
     }
 
     async _fetchInitialBrightness() {
