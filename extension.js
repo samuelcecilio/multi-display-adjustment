@@ -24,7 +24,7 @@ import { SystemIndicator } from 'resource:///org/gnome/shell/ui/quickSettings.js
 import { BrightnessSlider } from './brightness.js'
 import { ContrastSlider } from './contrast.js'
 import { areArraysEqual, devLog, setIntersection } from './code-convenience.js'
-import { DisplayConfig } from './display-config.js'
+import { DisplayConfigService } from './display-config-service.js'
 import { DdcutilService } from './ddcutil-service.js'
 
 
@@ -39,7 +39,7 @@ export default class DisplaysAdjustmentsExtension extends Extension {
     constructor(metadata) {
         super(metadata)
 
-        this._displayConfig = new DisplayConfig(metadata.path)
+        this._displayConfigService = new DisplayConfigService(metadata.path)
         this._ddcutilService = new DdcutilService()
 
         this._displayAdjustmentSliders = []
@@ -47,7 +47,7 @@ export default class DisplaysAdjustmentsExtension extends Extension {
     }
 
     async _correctLayout(displays) {
-        for (const display of await this._displayConfig._getLayoutFromMutter()) {
+        for (const display of await this._displayConfigService._getLayoutFromMutter()) {
             const key = display.model + "@" + display.connector
 
             if (key in displays) {
@@ -65,7 +65,7 @@ export default class DisplaysAdjustmentsExtension extends Extension {
     }
 
     async _rebuildSliders() {
-        const mutterDisplays = await this._displayConfig.getDisplays()
+        const mutterDisplays = await this._displayConfigService.getDisplays()
         const ddcDisplays = await this._ddcutilService._getDisplays()
 
         let ddcCapableDisplayIds = new Set()
@@ -122,10 +122,10 @@ export default class DisplaysAdjustmentsExtension extends Extension {
 
         this._displayAdjustmentsIndicator = new DisplayAdjustmentsIndicator()
 
-        await this._displayConfig.init()
+        await this._displayConfigService.init()
         await this._ddcutilService._init()
 
-        this._handlerId = this._displayConfig._proxy.connectSignal('MonitorsChanged', (proxy, nameOwner, args) => {
+        this._handlerId = this._displayConfigService._proxy.connectSignal('MonitorsChanged', (proxy, nameOwner, args) => {
             this._rebuildSliders()
         })
 
@@ -139,6 +139,6 @@ export default class DisplaysAdjustmentsExtension extends Extension {
         this._displayAdjustmentsIndicator.destroy()
         this._displayAdjustmentsIndicator = null
 
-        this._displayConfig._proxy.disconnectSignal(this._handlerId)
+        this._displayConfigService._proxy.disconnectSignal(this._handlerId)
     }
 }

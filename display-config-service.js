@@ -34,7 +34,7 @@ import { devLog, devOverrideOutputNames, getPossibleBoolean, startsWith } from '
  * As a consequence both sources need to be used to retrieve current layout
  * of the displays.
  */
-class DisplayConfig {
+class DisplayConfigService {
     constructor(extensionLocation) {
         this._extensionLocation = extensionLocation
     }
@@ -267,4 +267,4 @@ class DisplayConfig {
     }
 }
 
-export { DisplayConfig }
+export { DisplayConfigService }
