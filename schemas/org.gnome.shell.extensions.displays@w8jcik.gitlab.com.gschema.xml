@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<schemalist>
-  <schema id="org.gnome.shell.extensions.displays@w8jcik.gitlab.com" path="/org/gnome/shell/extensions/displays@w8jcik.gitlab.com/">
-    <key name="layout" type="a{sv}">
-      <default>{}</default>
-    </key>
-  </schema>
-</schemalist>

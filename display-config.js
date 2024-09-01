@@ -1,3 +1,20 @@
+/**
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
 import Gio from 'gi://Gio'
 
 import { areSetsEqual, devLog, devOverrideOutputNames, getPossibleBoolean, startsWith } from './code-convenience.js'
@@ -119,7 +136,7 @@ class DisplayConfig {
         </node>`
 
     async _initProxy() {
-        devLog("[toggle-displays] Initializing DBus proxy...")
+        devLog("[displays-adjustments] Initializing DBus proxy...")
 
         const TestProxy = Gio.DBusProxy.makeProxyWrapper(this._displayConfigInterface)
 
@@ -137,7 +154,7 @@ class DisplayConfig {
             )
         })
 
-        devLog("[toggle-displays] DBus proxy is ready")
+        devLog("[displays-adjustments] DBus proxy is ready")
     }
 
     async init() {
@@ -161,7 +178,7 @@ class DisplayConfig {
      * with external Python script.
      */
     async _getLayoutsFromConfigFile() {
-        devLog("[toggle-displays] Retrieving monitor config...")
+        devLog("[displays-adjustments] Retrieving monitor config...")
 
         Gio._promisify(Gio.Subprocess.prototype, 'communicate_utf8_async')
 
@@ -173,7 +190,7 @@ class DisplayConfig {
             throw new Error(stderr)
         }
 
-        devLog("[toggle-displays] Retrieved monitor config", stdout)
+        devLog("[displays-adjustments] Retrieved monitor config", stdout)
 
         return stdout
     }
@@ -192,7 +209,7 @@ class DisplayConfig {
     }
 
     async _getLayoutFromMutter() {
-        devLog("[toggle-displays] Retrieving displays layout from Mutter...")
+        devLog("[displays-adjustments] Retrieving displays layout from Mutter...")
 
         const currentState = await this._proxy.GetCurrentStateAsync()
 
@@ -243,7 +260,7 @@ class DisplayConfig {
             layout[connector]["primary"] = primary
         }
 
-        log("[toggle-displays] Retrieved displays layout from Mutter", Object.values(layout))
+        log("[displays-adjustments] Retrieved displays layout from Mutter", Object.values(layout))
 
         return Object.values(layout)
     }
@@ -265,7 +282,7 @@ class DisplayConfig {
     }
 
     _getCurrentConnectors(layout) {
-        devLog("[toggle-displays] Retrieving connectors...")
+        devLog("[displays-adjustments] Retrieving connectors...")
 
         let outputNames = []
 
@@ -275,7 +292,7 @@ class DisplayConfig {
 
         outputNames = devOverrideOutputNames(outputNames)
 
-        devLog("[toggle-displays] Found connectors", outputNames)
+        devLog("[displays-adjustments] Found connectors", outputNames)
 
         return outputNames
     }
@@ -312,7 +329,7 @@ class DisplayConfig {
             ])
         }
 
-        devLog("[toggle-displays] Applying layout", logicalMonitors)
+        devLog("[displays-adjustments] Applying layout", logicalMonitors)
 
         const serial = parseInt((await this._proxy.GetResourcesAsync())[0])
         const method = 1

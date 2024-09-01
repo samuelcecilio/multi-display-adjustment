@@ -2,6 +2,5 @@
   "name": "Displays adjustments",
   "description": "Offers sliders to control external displays' brightness and contrast through DDC.\n Extension relies on ddcutil-service. Installation process of ddcutil-service is quick and non-intrusive. ddcutil-service allows more responsive communication with the displays than ddcutil. More details in the README.md of https://gitlab.com/w8jcik/displays-adjustments.",
   "uuid": "displays-adjustments@w8jcik.gitlab.com",
-  "shell-version": [ "46" ],
-  "settings-schema": "org.gnome.shell.extensions.displays-adjustments@w8jcik.gitlab.com"
+  "shell-version": [ "46" ]
 }
