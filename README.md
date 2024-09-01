@@ -57,3 +57,7 @@ ddcutil -d 1 setvcp 10 50
 In case `ddcutil` works, describe [an issue](https://gitlab.com/w8jcik/displays-adjustments/-/issues) in the repository of this extension. Otherwise consider opening an issue in the `ddcutil` project.
 
 Some workarounds for hardware are described in [the documentation](https://www.ddcutil.com) of `ddcutil`.
+
+## License
+
+This extension is distributed under the terms of the GNU General Public License, version 2 or later.

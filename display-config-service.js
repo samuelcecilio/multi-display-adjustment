@@ -1,29 +1,8 @@
-/**
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * SPDX-License-Identifier: GPL-2.0-or-later
- */
-
 import Gio from 'gi://Gio'
 
 import { devLog, getPossibleBoolean, startsWith } from './code-convenience.js'
 
-/**
- * Retrieves and sets layout of displays using Mutter interface called DisplayConfig.
- * 
- * This extension is using only the connector names, enabled/disabled state and virtual desktop x/y coordinates.
- */
+
 class DisplayConfigService {
     /**
      * Mutter offers DBus interface to read and write configuration of displays.
@@ -38,11 +17,14 @@ class DisplayConfigService {
      * Ubuntu 24.04 LTS with GNOME/Mutter 46.0.
      * 
      * This is why a copy of org.gnome.Mutter.DisplayConfig.xml is hard-coded here.
+     * The copy includes only one signal and one method which this extension is using.
      * 
      * Notes:
      *  - Another project that talks to Mutter https://github.com/jadahl/gnome-monitor-config
      *    also ships it's own copy of org.gnome.Mutter.DisplayConfig.xml.
      *  - The content have been copied from https://gitlab.gnome.org/GNOME/mutter 46.2.
+     *  - The latest version can be found at
+     *    https://gitlab.gnome.org/GNOME/mutter/-/blob/main/data/dbus-interfaces/org.gnome.Mutter.DisplayConfig.xml
      */
     _displayConfigInterface = `
         <!DOCTYPE node PUBLIC
@@ -50,52 +32,6 @@ class DisplayConfigService {
         'http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd'>
         <node>
             <interface name="org.gnome.Mutter.DisplayConfig">
-            <method name="GetResources">
-                <arg name="serial" direction="out" type="u" />
-                <arg name="crtcs" direction="out" type="a(uxiiiiiuaua{sv})" />
-                <arg name="outputs" direction="out" type="a(uxiausauaua{sv})" />
-                <arg name="modes" direction="out" type="a(uxuudu)" />
-                <arg name="max_screen_width" direction="out" type="i" />
-                <arg name="max_screen_height" direction="out" type="i" />
-            </method>
-        
-            <method name="ApplyConfiguration">
-                <arg name="serial" direction="in" type="u" />
-                <arg name="persistent" direction="in" type="b" />
-                <arg name="crtcs" direction="in" type="a(uiiiuaua{sv})" />
-                <arg name="outputs" direction="in" type="a(ua{sv})" />
-            </method>
-        
-            <method name="ChangeBacklight">
-                <arg name="serial" direction="in" type="u" />
-                <arg name="output" direction="in" type="u" />
-                <arg name="value" direction="in" type="i" />
-                <arg name="new_value" direction="out" type="i" />
-            </method>
-        
-            <method name="GetCrtcGamma">
-                <arg name="serial" direction="in" type="u" />
-                <arg name="crtc" direction="in" type="u" />
-                <arg name="red" direction="out" type="aq" />
-                <arg name="green" direction="out" type="aq" />
-                <arg name="blue" direction="out" type="aq" />
-            </method>
-        
-            <method name="SetCrtcGamma">
-                <arg name="serial" direction="in" type="u" />
-                <arg name="crtc" direction="in" type="u" />
-                <arg name="red" direction="in" type="aq" />
-                <arg name="green" direction="in" type="aq" />
-                <arg name="blue" direction="in" type="aq" />
-            </method>
-        
-            <property name="PowerSaveMode" type="i" access="readwrite" />
-        
-            <property name="PanelOrientationManaged" type="b" access="read" />
-        
-            <property name="ApplyMonitorsConfigAllowed" type="b" access="read" />
-        
-            <property name="NightLightSupported" type="b" access="read" />
         
             <signal name="MonitorsChanged" />
         
@@ -105,19 +41,7 @@ class DisplayConfigService {
                 <arg name="logical_monitors" direction="out" type="a(iiduba(ssss)a{sv})" />
                 <arg name="properties" direction="out" type="a{sv}" />
             </method>
-        
-            <method name="ApplyMonitorsConfig">
-                <arg name="serial" direction="in" type="u" />
-                <arg name="method" direction="in" type="u" />
-                <arg name="logical_monitors" direction="in" type="a(iiduba(ssa{sv}))" />
-                <arg name="properties" direction="in" type="a{sv}" />
-            </method>
-        
-            <method name="SetOutputCTM">
-                <arg name="serial" direction="in" type="u" />
-                <arg name="output" direction="in" type="u" />
-                <arg name="ctm" direction="in" type="(ttttttttt)" />
-            </method>
+
             </interface>
         </node>`
 
@@ -188,8 +112,6 @@ class DisplayConfigService {
                         serial,
                         width: mode[1],
                         height: mode[2],
-                        rate: mode[3],
-                        rawRate: mode[0].split("@")[1],
                         enabled: getPossibleBoolean(modeProperties, "is-current")
                     }
 
@@ -201,14 +123,10 @@ class DisplayConfigService {
         for (const logicalMonitor of currentState[2]) {
             const x = logicalMonitor[0]
             const y = logicalMonitor[1]
-            const scale = logicalMonitor[2]
-            const primary = logicalMonitor[4]
             const connector = logicalMonitor[5][0][0]
 
             layout[connector]["x"] = x
             layout[connector]["y"] = y
-            layout[connector]["scale"] = scale
-            layout[connector]["primary"] = primary
         }
 
         devLog("[displays-adjustments] Retrieved displays layout from Mutter", Object.values(layout))
@@ -230,20 +148,6 @@ class DisplayConfigService {
         }
 
         return layoutMap
-    }
-
-    _getCurrentConnectors(layout) {
-        devLog("[displays-adjustments] Retrieving connectors...")
-
-        let outputNames = []
-
-        for (const display of layout) {
-            outputNames.push(display["model"] + "@" + display["connector"])
-        }
-
-        devLog("[displays-adjustments] Found connectors", outputNames)
-
-        return outputNames
     }
 
     async getDisplays() {
