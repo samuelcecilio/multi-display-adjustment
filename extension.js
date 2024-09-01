@@ -27,18 +27,6 @@ export default class DisplaysAdjustmentsExtension extends Extension {
         this._previousSlidersDisplaysIds = new Set()
     }
 
-    async _correctLayout(displays) {
-        for (const display of await this._displayConfigService._getLayoutFromMutter()) {
-            const key = display.model + "@" + display.connector
-
-            if (key in displays) {
-                displays[key].enabled = display.enabled
-            }
-        }
-
-        return displays
-    }
-
     async _destroySliders() {
         this._indicator.quickSettingsItems.forEach(item => item.destroy())
         this._indicator.quickSettingsItems = []
