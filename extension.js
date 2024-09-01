@@ -85,7 +85,7 @@ export default class DisplaysAdjustmentsExtension extends Extension {
 
         let slidersDisplaysIds = setIntersection(ddcCapableDisplayIds, enabledDisplaysIds)
 
-        devLog("[displays-adjustments] previous slider ids", "slider ids", Array.from(this._previousSlidersDisplaysIds), Array.from(slidersDisplaysIds))
+        devLog("[displays-adjustments] previous slider ids", Array.from(this._previousSlidersDisplaysIds), "slider ids", Array.from(slidersDisplaysIds))
 
         if (areArraysEqual(Array.from(this._previousSlidersDisplaysIds), Array.from(slidersDisplaysIds)) && this._displayAdjustmentsIndicator.quickSettingsItems.length != 0) {
             return

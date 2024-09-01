@@ -15,8 +15,6 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-const areSetsEqual = (a, b) => a.size === b.size && [...a].every(value => b.has(value))
-
 function getPossibleBoolean(variable, _property) {
     if (_property in variable) {
         return variable[_property].get_boolean()
@@ -58,4 +56,4 @@ function devOverrideOutputNames(outputNames) {
     return outputNames
 }
 
-export { areArraysEqual, areSetsEqual, devLog, devOverrideOutputNames, emptyObject, getPossibleBoolean, setIntersection, startsWith }
+export { areArraysEqual, devLog, devOverrideOutputNames, emptyObject, getPossibleBoolean, setIntersection, startsWith }

@@ -17,7 +17,7 @@
 
 import Gio from 'gi://Gio'
 
-import { areSetsEqual, devLog, devOverrideOutputNames, getPossibleBoolean, startsWith } from './code-convenience.js'
+import { devLog, devOverrideOutputNames, getPossibleBoolean, startsWith } from './code-convenience.js'
 
 /**
  * Retrieves layout of displays using Mutter interface called DisplayConfig
@@ -45,7 +45,7 @@ class DisplayConfig {
      * 
      *   import { loadInterfaceXML } from 'resource:///org/gnome/shell/misc/fileUtils.js'
      *   ...
-     this._displayConfigInterface = loadInterfaceXML('org.gnome.Mutter.DisplayConfig')
+     *   this._displayConfigInterface = loadInterfaceXML('org.gnome.Mutter.DisplayConfig')
      * 
      * Unfortunately org.gnome.Mutter.DisplayConfig.xml is not packaged by Ubuntu,
      * or maybe it is not packaged in general. At least, it is missing in the latest
@@ -173,41 +173,6 @@ class DisplayConfig {
         )
     }
 
-    /**
-     * Retrieving layouts stored in ~/.config/monitors.xml. Parsing is done
-     * with external Python script.
-     */
-    async _getLayoutsFromConfigFile() {
-        devLog("[displays-adjustments] Retrieving monitor config...")
-
-        Gio._promisify(Gio.Subprocess.prototype, 'communicate_utf8_async')
-
-        const proc = Gio.Subprocess.new(['python', this._extensionLocation + '/parse-monitors-config.py'],
-                Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE)
-        const [stdout, stderr] = await proc.communicate_utf8_async(null, null)
-
-        if (!proc.get_successful()) {
-            throw new Error(stderr)
-        }
-
-        devLog("[displays-adjustments] Retrieved monitor config", stdout)
-
-        return stdout
-    }
-
-    /** Pick layout based on currently connected set of displays. */
-    async _getLayoutFromConfigFile(connectors) {
-        const rawPresets = await this._getLayoutsFromConfigFile()
-
-        for (const preset of JSON.parse(rawPresets)["presets"]) {
-            if (areSetsEqual(new Set(Object.keys(preset)), new Set(connectors))) {
-                return this._orderLeftToRight(preset)
-            }
-        }
-
-        return { }
-    }
-
     async _getLayoutFromMutter() {
         devLog("[displays-adjustments] Retrieving displays layout from Mutter...")
 
@@ -298,44 +263,7 @@ class DisplayConfig {
     }
 
     async getDisplays() {
-        // return await this._getLayoutFromConfigFile(this._getCurrentConnectors(await this._getLayoutFromMutter()))
         return await this._getLayoutFromMutterMap()
-    }
-
-    /** Configure displays through Mutter. */
-    async applyLayout(displays) {
-        let xs = []
-        let ys = []
-
-        for (const [key, display] of Object.entries(displays)) {
-            if (display.enabled) {
-              xs.push(display.x)
-              ys.push(display.y)
-            }
-        }
-
-        const minX = Math.min(...xs)
-        const minY = Math.min(...ys)
-
-        let logicalMonitors = []
-
-        for (const [key, display] of Object.entries(displays)) {
-            if (!display.enabled) {
-                continue
-            }
-
-            logicalMonitors.push([
-                display.x - minX, display.y - minY, 1.0, 0, display.primary, [[ display.connector, '' + display.width + 'x' + display.height + '@' + display.rawRate, { } ]]
-            ])
-        }
-
-        devLog("[displays-adjustments] Applying layout", logicalMonitors)
-
-        const serial = parseInt((await this._proxy.GetResourcesAsync())[0])
-        const method = 1
-        const properties = { }
-
-        this._proxy.ApplyMonitorsConfigAsync(serial, method, logicalMonitors, properties)
     }
 }
 

@@ -4,14 +4,13 @@ Offers sliders to control external displays' brightness and contrast through DDC
 
 ![](./screenshot.png)
 
-Extension relies on `ddcutil-service`. Installation process of `ddcutil-service` is quick and non-intrusive. `ddcutil-service` allows more responsive communication with the displays than standalone calls to `ddcutil`.
+Extension relies on `ddcutil-service`. Installation process of `ddcutil-service` is quick and non-intrusive. `ddcutil-service` allows more responsive communication with the displays than calling `ddcutil`.
 
-A convenient way to install GNOME extensions, including this extension is to use [Extension Manager](https://flathub.org/apps/com.mattjakeman.ExtensionManager).
+A convenient way to install GNOME extensions (including this extension) is to use [Extension Manager](https://flathub.org/apps/com.mattjakeman.ExtensionManager).
 
 ## Dependencies
 
 * GNOME 46
-* Python >= 3.6 (many distributions install it by default)
 * [_ddcutil-service_](https://github.com/digitaltrails/ddcutil-service)
 
 ## Installation of _ddcutil-service_
