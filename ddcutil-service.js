@@ -202,7 +202,7 @@ class DdcutilService {
         await this._initBrightnessProxy()
     }
 
-    async _getDisplays() {
+    async getDisplays() {
         const ddcOnly = true
 
         const reply = await this._proxy.DetectAsync(ddcOnly ? 0 : 1)

@@ -58,15 +58,15 @@ export default class DisplaysAdjustmentsExtension extends Extension {
         return displays
     }
 
-    async _destroyDisplayAdjustmentSliders() {
-        this._displaysAdjustmentsIndicator.quickSettingsItems.forEach(item => item.destroy())
-        this._displaysAdjustmentsIndicator.quickSettingsItems = []
+    async _destroySliders() {
+        this._indicator.quickSettingsItems.forEach(item => item.destroy())
+        this._indicator.quickSettingsItems = []
         this._displayAdjustmentSliders = []
     }
 
     async _rebuildSliders() {
         const mutterDisplays = await this._displayConfigService.getDisplays()
-        const ddcDisplays = await this._ddcutilService._getDisplays()
+        const ddcDisplays = await this._ddcutilService.getDisplays()
 
         let ddcCapableDisplayIds = new Set()
 
@@ -88,13 +88,13 @@ export default class DisplaysAdjustmentsExtension extends Extension {
 
         devLog("[displays-adjustments] previous slider ids", Array.from(this._previousSlidersDisplaysIds), "slider ids", Array.from(slidersDisplaysIds))
 
-        if (areArraysEqual(Array.from(this._previousSlidersDisplaysIds), Array.from(slidersDisplaysIds)) && this._displaysAdjustmentsIndicator.quickSettingsItems.length != 0) {
+        if (areArraysEqual(Array.from(this._previousSlidersDisplaysIds), Array.from(slidersDisplaysIds)) && this._indicator.quickSettingsItems.length != 0) {
             return
         }
 
-        this._destroyDisplayAdjustmentSliders()
-
         this._previousSlidersDisplaysIds = slidersDisplaysIds
+
+        this._destroySliders()
 
         for (const ddcDisplay of ddcDisplays) {
             if (!slidersDisplaysIds.has(`${ddcDisplay.model}#${ddcDisplay.serial}`)) {
@@ -107,25 +107,25 @@ export default class DisplaysAdjustmentsExtension extends Extension {
             const contrastSlider = new ContrastSlider(this._ddcutilService, ddcDisplay.displayId)
             this._displayAdjustmentSliders.push(contrastSlider)
 
-            this._displaysAdjustmentsIndicator.quickSettingsItems.push(brightnessSlider)
-            this._displaysAdjustmentsIndicator.quickSettingsItems.push(contrastSlider)
+            this._indicator.quickSettingsItems.push(brightnessSlider)
+            this._indicator.quickSettingsItems.push(contrastSlider)
             
             brightnessSlider._fetchInitialBrightness()
             contrastSlider._fetchInitialContrast()
         }
 
-        Main.panel.statusArea.quickSettings.addExternalIndicator(this._displaysAdjustmentsIndicator, 2)
+        Main.panel.statusArea.quickSettings.addExternalIndicator(this._indicator, 2)
     }
 
     async enable() {
         devLog("[displays-adjustments] Starting extension...")
 
-        this._displaysAdjustmentsIndicator = new DisplaysAdjustmentsIndicator()
+        this._indicator = new DisplaysAdjustmentsIndicator()
 
         await this._displayConfigService.init()
         await this._ddcutilService._init()
 
-        this._handlerId = this._displayConfigService._proxy.connectSignal('MonitorsChanged', (proxy, nameOwner, args) => {
+        this._monitorsChangedSignalHandle = this._displayConfigService._proxy.connectSignal('MonitorsChanged', (proxy, nameOwner, args) => {
             this._rebuildSliders()
         })
 
@@ -135,10 +135,11 @@ export default class DisplaysAdjustmentsExtension extends Extension {
     }
 
     async disable() {
-        this._destroyDisplayAdjustmentSliders()
-        this._displaysAdjustmentsIndicator.destroy()
-        this._displaysAdjustmentsIndicator = null
+        this._destroySliders()
 
-        this._displayConfigService._proxy.disconnectSignal(this._handlerId)
+        this._indicator.destroy()
+        this._indicator = null
+
+        this._displayConfigService._proxy.disconnectSignal(this._monitorsChangedSignalHandle)
     }
 }
