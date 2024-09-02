@@ -236,14 +236,14 @@ class DdcutilService {
         await this._proxy.SetVcpAsync(displayId, "", 18, newValue, 0)
     }
 
-    // async _toggleDynamicSleep(enable) {
-    //     this._proxy.DdcutilDynamicSleep = enable
-    // }
+    async _toggleDynamicSleep(enable) {
+        this._proxy.DdcutilDynamicSleep = enable
+    }
 
-    // async _setSleepMultiplier(displayId, multiplier) {
-    //     // gdbus call --session --dest=com.ddcutil.DdcutilService --object-path /com/ddcutil/DdcutilObject --method com.ddcutil.DdcutilInterface.SetSleepMultiplier 2 "" 1.5 0
-    //     await this._proxy.SetSleepMultiplierAsync(displayId, "", multiplier, 0)
-    // }
+    async _setSleepMultiplier(displayId, multiplier) {
+        // gdbus call --session --dest=com.ddcutil.DdcutilService --object-path /com/ddcutil/DdcutilObject --method com.ddcutil.DdcutilInterface.SetSleepMultiplier 2 "" 1.5 0
+        await this._proxy.SetSleepMultiplierAsync(displayId, "", multiplier, 0)
+    }
 }
 
 export { DdcutilService }
