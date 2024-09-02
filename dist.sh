@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-rm -rf dist
-mkdir -p dist/
+rm -rf ~/.local/share/gnome-shell/extensions/display-adjustment@w8jcik.gitlab.com
+mkdir -p ~/.local/share/gnome-shell/extensions/display-adjustment@w8jcik.gitlab.com
 
-cp *.js COPYING metadata.json README.md screenshot.png dist/
+rsync -a ./ --exclude dev.md --exclude .gitignore --exclude .git --exclude dist.sh ~/.local/share/gnome-shell/extensions/display-adjustment@w8jcik.gitlab.com/
