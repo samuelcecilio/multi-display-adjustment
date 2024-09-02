@@ -1,8 +1,8 @@
 {
   "name": "Displays adjustments",
-  "description": "Offers sliders to control external displays' brightness and contrast through DDC.\nExtension relies on ddcutil-service. Installation process of ddcutil-service is quick and non-intrusive. ddcutil-service allows more responsive communication with the displays than ddcutil. More details in the README.md of https://gitlab.com/w8jcik/displays-adjustments.",
-  "uuid": "displays-adjustments@w8jcik.gitlab.com",
-  "url": "https://gitlab.com/w8jcik/displays-adjustments",
+  "description": "Offers sliders to control external displays' brightness and contrast through DDC.\nExtension relies on ddcutil-service. Installation process of ddcutil-service is quick and non-intrusive. ddcutil-service allows more responsive communication with the displays than ddcutil. More details in the README.md of https://gitlab.com/w8jcik/display-adjustment.",
+  "uuid": "display-adjustment@w8jcik.gitlab.com",
+  "url": "https://gitlab.com/w8jcik/display-adjustment",
   "shell-version": [ "46" ],
   "version-name": "0.0.1"
 }

@@ -1,4 +1,4 @@
-# Displays adjustments GNOME shell extension
+# Display adjustment GNOME shell extension
 
 Offers sliders to control external displays' brightness and contrast through DDC/CI.
 
@@ -54,7 +54,7 @@ Following call adjusts the brightness of the first display to 50%
 ddcutil -d 1 setvcp 10 50
 ```
 
-In case `ddcutil` works, describe [an issue](https://gitlab.com/w8jcik/displays-adjustments/-/issues) in the repository of this extension. Otherwise consider opening an issue in the `ddcutil` project.
+In case `ddcutil` works, describe [an issue](https://gitlab.com/w8jcik/display-adjustment/-/issues) in the repository of this extension. Otherwise consider opening an issue in the `ddcutil` project.
 
 Some workarounds for hardware are described in [the documentation](https://www.ddcutil.com) of `ddcutil`.
 

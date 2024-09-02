@@ -4,7 +4,7 @@
 
 ```bash
 cd ~/.local/share/gnome-shell/extensions
-git clone git@gitlab.com:w8jcik/toggle-displays.git displays-adjustments@w8jcik.gitlab.com
+git clone git@gitlab.com:w8jcik/toggle-displays.git display-adjustment@w8jcik.gitlab.com
 ```
 
 ## Start
@@ -32,13 +32,13 @@ Example retrieval of display configuration from Mutter using GJS
 // gdbus call --session --dest=org.gnome.Mutter.DisplayConfig --object-path /org/gnome/Mutter/DisplayConfig --method org.gnome.Mutter.DisplayConfig.GetResources
 
 const displayResources = await proxy.GetResourcesAsync()
-console.log("[displays-adjustments] Display resources", displayResources)
+console.log("[display-adjustment] Display resources", displayResources)
 const [rawSerial, crtcs, outputs, modes] = displayResources
 
 // gdbus call --session --dest=org.gnome.Mutter.DisplayConfig --object-path /org/gnome/Mutter/DisplayConfig --method org.gnome.Mutter.DisplayConfig.GetCurrentState
 
 const currentState = await proxy.GetCurrentStateAsync()
-console.log("[displays-adjustments] Current displays state", currentState)
+console.log("[display-adjustment] Current displays state", currentState)
 const [rawSerial, monitors, logicalMonitors, properties] = currentState
 ```
 
