@@ -52,7 +52,7 @@ export default class DisplaysAdjustmentsExtension extends Extension {
             enabledDisplaysIds.add(`${display.model}#${display.serial}`)
         }
 
-        let slidersDisplaysIds = setIntersection(ddcCapableDisplayIds, enabledDisplaysIds)
+        let slidersDisplaysIds = setIntersection(enabledDisplaysIds, ddcCapableDisplayIds)
 
         devLog("[displays-adjustments] previous slider ids", Array.from(this._previousSlidersDisplaysIds), "slider ids", Array.from(slidersDisplaysIds))
 
