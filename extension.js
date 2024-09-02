@@ -18,15 +18,6 @@ class DisplaysAdjustmentsIndicator extends SystemIndicator {
 })
 
 export default class DisplaysAdjustmentsExtension extends Extension {
-    constructor(metadata) {
-        super(metadata)
-
-        this._displayConfigService = new DisplayConfigService()
-        this._ddcutilService = new DdcutilService()
-
-        this._previousSlidersDisplaysIds = new Set()
-    }
-
     async _destroySliders() {
         this._indicator.quickSettingsItems.forEach(item => item.destroy())
         this._indicator.quickSettingsItems = []
@@ -85,6 +76,11 @@ export default class DisplaysAdjustmentsExtension extends Extension {
     async enable() {
         devLog("[display-adjustment] Starting extension...")
 
+        this._previousSlidersDisplaysIds = new Set()
+
+        this._displayConfigService = new DisplayConfigService()
+        this._ddcutilService = new DdcutilService()
+
         this._indicator = new DisplaysAdjustmentsIndicator()
 
         await this._displayConfigService.init()
@@ -106,5 +102,10 @@ export default class DisplaysAdjustmentsExtension extends Extension {
         this._indicator = null
 
         this._displayConfigService._proxy.disconnectSignal(this._monitorsChangedSignalHandle)
+
+        this._displayConfigService = null
+        this._ddcutilService = null
+
+        this._previousSlidersDisplaysIds = null
     }
 }
