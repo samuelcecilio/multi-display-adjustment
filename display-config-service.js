@@ -144,14 +144,14 @@ class DisplayConfigService {
                 continue
             }
 
-            layoutMap[`${display["model"]}@${display["connector"]}`] = display
+            layoutMap[`${display["model"]}#${display["serial"]}`] = display
         }
 
         return layoutMap
     }
 
     async getDisplays() {
-        return await this._getLayoutFromMutterMap()
+        return this._orderLeftToRight(await this._getLayoutFromMutterMap())
     }
 }
 

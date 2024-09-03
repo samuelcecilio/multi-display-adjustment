@@ -29,7 +29,7 @@ export default class DisplaysAdjustmentsExtension extends Extension {
 
         let ddcCapableDisplayIds = new Set()
 
-        for (const ddcDisplay of ddcDisplays) {
+        for (const [key, ddcDisplay] of Object.entries(ddcDisplays)) {
             ddcCapableDisplayIds.add(`${ddcDisplay.model}#${ddcDisplay.serial}`)
         }
 
@@ -55,10 +55,16 @@ export default class DisplaysAdjustmentsExtension extends Extension {
 
         this._destroySliders()
 
-        for (const ddcDisplay of ddcDisplays) {
-            if (!slidersDisplaysIds.has(`${ddcDisplay.model}#${ddcDisplay.serial}`)) {
+        for (const [key, mutterDisplay] of Object.entries(mutterDisplays)) {
+            if (! key in ddcDisplays) {
                 continue
             }
+
+            if (! mutterDisplay["enabled"]) {
+                continue
+            }
+
+            const ddcDisplay = ddcDisplays[key]
 
             const brightnessSlider = new BrightnessSlider(this._ddcutilService, ddcDisplay.displayId)
             const contrastSlider = new ContrastSlider(this._ddcutilService, ddcDisplay.displayId)

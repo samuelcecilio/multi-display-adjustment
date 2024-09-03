@@ -191,14 +191,14 @@ class DdcutilService {
 
         const reply = await this._proxy.DetectAsync(ddcOnly ? 0 : 1)
 
-        let ddcDisplays = []
+        let ddcDisplays = { }
 
         for (const display of reply[1]) {
             const displayId = display[0]
             const model = display[4]
             const serial = display[5]
 
-            ddcDisplays.push({displayId, model, serial})
+            ddcDisplays[`${model}#${serial}`] = { displayId, model, serial }
         }
 
         return ddcDisplays
