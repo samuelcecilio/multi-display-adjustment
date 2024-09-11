@@ -1,4 +1,4 @@
-# Display adjustment GNOME shell extension
+# Display Adjustment GNOME shell extension
 
 Offers sliders to control external displays' brightness and contrast through DDC/CI.
 
@@ -17,9 +17,9 @@ A convenient way to install GNOME extensions (including this extension) is to us
 
 ## Installation of _ddcutil-service_
 
-  * [Ubuntu and Debian packages](https://gitlab.com/w8jcik/ddcutil-service.deb) (built by me)
-  * [Arch AUR package](https://aur.archlinux.org/packages/ddcutil-service)
-  * [OpenSUSE packages](https://software.opensuse.org/package/ddcutil-service)
+* [Ubuntu and Debian packages](https://gitlab.com/w8jcik/ddcutil-service.deb) (built by me)
+* [Arch AUR package](https://aur.archlinux.org/packages/ddcutil-service)
+* [OpenSUSE packages](https://software.opensuse.org/package/ddcutil-service)
 
 ### Manual installation
 
@@ -35,8 +35,7 @@ A convenient way to install GNOME extensions (including this extension) is to us
   make
   make install
   ```
-  Service installs to `~/.local/share/dbus-1/services/com.ddcutil.DdcutilService.service` and `~/.local/bin/ddcutil-service`.  
-  It is activated after the next login.
+  Service installs to `~/.local/share/dbus-1/services/com.ddcutil.DdcutilService.service` and `~/.local/bin/ddcutil-service`. It is activated after the next login.
 
 ## Diagnosing issues
 
