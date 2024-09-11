@@ -12,7 +12,7 @@ A convenient way to install GNOME extensions (including this extension) is to us
 
 ## Dependencies
 
-* GNOME 46
+* GNOME 46-47
 * [_ddcutil-service_](https://github.com/digitaltrails/ddcutil-service)
 
 ## Installation of _ddcutil-service_
