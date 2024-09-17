@@ -17,13 +17,15 @@ A convenient way to install GNOME extensions (including this extension) is to us
 
 ## Installation of _ddcutil-service_
 
-* [Ubuntu and Debian packages](https://gitlab.com/w8jcik/ddcutil-service.deb) (built by me)
+### From a package
+
+* [Ubuntu and Debian packages](https://gitlab.com/w8jcik/ddcutil-service.deb)
 * [Arch AUR package](https://aur.archlinux.org/packages/ddcutil-service)
 * [OpenSUSE packages](https://software.opensuse.org/package/ddcutil-service)
 
-### Manual installation
+### Build by yourself
 
-- Dependencies `ddcutil`, `libddcutil` and `glib`  
+- Install dependencies `ddcutil`, `libddcutil` and `glib`  
   For example in Ubuntu and Debian
   ```bash
   sudo apt install ddcutil libddcutil-dev libglib2.0-dev
