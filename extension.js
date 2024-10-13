@@ -56,7 +56,7 @@ export default class DisplaysAdjustmentsExtension extends Extension {
         this._destroySliders()
 
         for (const [key, mutterDisplay] of Object.entries(mutterDisplays)) {
-            if (! key in ddcDisplays) {
+            if (! (key in ddcDisplays)) {
                 continue
             }
 
