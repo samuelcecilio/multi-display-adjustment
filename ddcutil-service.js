@@ -1,5 +1,6 @@
 import Gio from 'gi://Gio'
 
+import { devLog } from './code-convenience.js'
 
 class DdcutilService {
     // From github.com/digitaltrails/ddcutil-service/blob/main/ddcutil-service.c
@@ -187,6 +188,8 @@ class DdcutilService {
     }
 
     async getDisplays() {
+        // gdbus call --session --dest=com.ddcutil.DdcutilService --object-path /com/ddcutil/DdcutilObject --method com.ddcutil.DdcutilInterface.Detect 8
+
         const ddcOnly = true
 
         const reply = await this._proxy.DetectAsync(ddcOnly ? 0 : 1)
@@ -197,9 +200,20 @@ class DdcutilService {
             const displayId = display[0]
             const model = display[4]
             const serial = display[5]
+            const binarySerial = display[8]
 
-            ddcDisplays[`${model}#${serial}`] = { displayId, model, serial }
+            let derivedSerial
+
+            if (`${serial}` === '') {
+                derivedSerial = `0x${binarySerial.toString(16).padStart(8, '0')}`  // this fallback is consistent with Mutter behavior
+            } else {
+                derivedSerial = serial
+            }
+
+            ddcDisplays[`${model}#${derivedSerial}`] = { displayId, model, serial: derivedSerial }
         }
+
+        devLog("[display-adjustment] Retrieved displays from ddcutil-service", Object.values(ddcDisplays))
 
         return ddcDisplays
     }
