@@ -55,11 +55,12 @@ Following call adjusts the brightness of the first display to 50%
 ddcutil -d 1 setvcp 10 50
 ```
 
-In case `ddcutil` works, describe [an issue](https://gitlab.com/w8jcik/display-adjustment/-/issues) in the repository of this extension. Otherwise consider opening an issue in the `ddcutil` project.
+In case `ddcutil` commands do not work:
+- Check the [ddcutil notes on specific monitors](https://github.com/rockowitz/ddcutil/wiki/Notes-on-Specific-Monitors).
+- Search in [the past issues of ddcutil](https://github.com/rockowitz/ddcutil/issues) using your monitor model or the error message.
+- Finally consider opening an issue in the `ddcutil` project.
 
-Some workarounds for hardware are described in [the documentation](https://www.ddcutil.com) of `ddcutil`.
-
-When opening an issue for this project attach following:
+In case `ddcutil` works then this extension is at fault. Create [an issue](https://gitlab.com/w8jcik/display-adjustment/-/issues) in this project. Please attach:
 
 - Output from
   ```sh
@@ -78,7 +79,7 @@ When opening an issue for this project attach following:
 
 - The error message visible in Alt + F2, `lg`, _Extensions_, _Display Adjustment_, _Show Errors_.
 
-- Extra debug output (optional):
+- Extra debug output from this extension (optional):
 
   1. Edit `~/.local/share/gnome-shell/extensions/display-adjustment@w8jcik.gitlab.com/code-convenience.js` 
      ```diff
