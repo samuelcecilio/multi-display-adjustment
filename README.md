@@ -98,12 +98,11 @@ In case `ddcutil` works then this extension is at fault. Create [an issue](https
 
 # Known issues
 
-1. `ddcutil@2` (or maybe `ddcutil-service`) sometimes needs a bit of time after boot to calibrate. Calibration happens after the first use. That means that the first change of slider might change the actual brightness or contrast with 10 seconds delay.
+1. `ddcutil@2` (or maybe `ddcutil-service`) sometimes needs a bit of time after boot to calibrate. Calibration happens after the first use. That means that the first change of slider might change the actual brightness or contrast with a delay of about 10 seconds.
 2. There are settings in displays that might lock the brightness control. Examples:
    - Iiyama's _Eco mode_ locks brightness at specific level. Just disable the _Eco mode_.
    - Eizo's ambient light sensor. With sensor enabled, the brightness slider still works, but not as you might expect. It sets the upper bound for brightness. Sensor can be disabled to get the manual control.
-3. For some displays, DDC communication fails partially, giving zeroes as responses. In such case invalid sliders might appear set to 0.
-4. Extension relies on display's serial number to identify it. There are displays that don't report their serial number. Fallback mechanism is present, but not well tested. Feel free to open an issue for your display.
+3. Extension relies on display's serial number to identify it. There are displays that don't report their serial number. Fallback mechanism is present, but not well tested. Feel free to open an issue for your display.
 
 ## License
 
