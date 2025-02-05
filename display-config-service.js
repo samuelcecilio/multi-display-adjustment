@@ -105,17 +105,36 @@ class DisplayConfigService {
             for (const mode of modes) {
                 const modeProperties = mode[6]
 
-                if (getPossibleBoolean(modeProperties, "is-preferred")) {
+                if (getPossibleBoolean(modeProperties, "is-current")) {
                     layout[connector] = {
                         connector,
                         model,
                         serial,
                         width: mode[1],
                         height: mode[2],
-                        enabled: getPossibleBoolean(modeProperties, "is-current")
+                        enabled: true
                     }
 
                     break
+                }
+            }
+
+            if (!(connector in layout)) {
+                for (const mode of modes) {
+                    const modeProperties = mode[6]
+
+                    if (getPossibleBoolean(modeProperties, "is-preferred")) {
+                        layout[connector] = {
+                            connector,
+                            model,
+                            serial,
+                            width: mode[1],
+                            height: mode[2],
+                            enabled: false
+                        }
+
+                        break
+                    }
                 }
             }
         }
