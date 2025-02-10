@@ -79,6 +79,12 @@ In case `ddcutil` works then this extension is at fault. Create [an issue](https
 
 - The error message visible in Alt + F2, `lg`, _Extensions_, _Display Adjustment_, _Show Errors_.
 
+- Output from (optional):
+  ```sh
+  gdbus call --session --dest=org.gnome.Mutter.DisplayConfig --object-path /org/gnome/Mutter/DisplayConfig --method org.gnome.Mutter.DisplayConfig.GetResources
+  gdbus call --session --dest=org.gnome.Mutter.DisplayConfig --object-path /org/gnome/Mutter/DisplayConfig --method org.gnome.Mutter.DisplayConfig.GetCurrentState
+  ```
+
 - Extra debug output from this extension (optional):
 
   1. Edit `~/.local/share/gnome-shell/extensions/display-adjustment@w8jcik.gitlab.com/code-convenience.js` 
