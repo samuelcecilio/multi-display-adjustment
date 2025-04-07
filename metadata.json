@@ -3,6 +3,6 @@
   "description": "Offers sliders to control external displays' brightness and contrast through DDC. Extension requires ddcutil-service to be installed.\nInstallation process of ddcutil-service is quick and non-intrusive. The details can be found at https://gitlab.com/w8jcik/display-adjustment#installation-of-ddcutil-service. ddcutil-service allows more responsive communication with the displays than ddcutil.",
   "uuid": "display-adjustment@w8jcik.gitlab.com",
   "url": "https://gitlab.com/w8jcik/display-adjustment",
-  "shell-version": [ "46", "47" ],
-  "version-name": "0.0.5"
+  "shell-version": [ "46", "47", "48" ],
+  "version-name": "0.0.6"
 }

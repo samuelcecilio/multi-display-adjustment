@@ -12,7 +12,7 @@ A convenient way to install GNOME extensions (including this extension) is to us
 
 ## Dependencies
 
-* GNOME 46-47
+* GNOME 46-48
 * [_ddcutil-service_](https://github.com/digitaltrails/ddcutil-service)
 
 ## Installation of _ddcutil-service_
@@ -32,7 +32,7 @@ A convenient way to install GNOME extensions (including this extension) is to us
    ```
 2. Build and install the service
    ```bash
-   git clone --branch v1.0.11 https://github.com/digitaltrails/ddcutil-service.git
+   git clone --branch v1.0.14 https://github.com/digitaltrails/ddcutil-service.git
    cd ddcutil-service
    make
    make install
