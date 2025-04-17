@@ -46,6 +46,6 @@ A convenient way to install GNOME extensions (including this extension) is to us
 * [Diagnosing issues](./troubleshooting.md#diagnosing-issues)
 * [Known issues](./troubleshooting.md#known-issues)
 
-## License
+# License
 
 This extension is distributed under the terms of the GNU General Public License, version 2 or later.
