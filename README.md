@@ -28,23 +28,28 @@ A convenient way to install GNOME extensions (including this extension) is to us
 ### Build by yourself
 
 1. __Install dependencies `ddcutil`, `libddcutil` and `glib`__  
-   For example in Ubuntu and Debian
+
+   On Ubuntu and Debian
+
    ```bash
-   sudo apt install ddcutil libddcutil-dev libglib2.0-dev
+   sudo apt install build-essential ddcutil libddcutil-dev libglib2.0-dev
    ```
+
    On Fedora (and likely other RPM based distributions)
+
    ```bash
    sudo dnf install make gcc ddcutil libddcutil-devel glib2-devel
    ```
-   (`make` and `gcc` are also required and not installed by default)
 
 2. __Build and install the service__
+
    ```bash
    git clone --branch v1.0.14 https://github.com/digitaltrails/ddcutil-service.git
    cd ddcutil-service
    make
    make install
    ```
+
    Service installs to `~/.local/share/dbus-1/services/com.ddcutil.DdcutilService.service` and  `~/.local/bin/ddcutil-service`. It is activated after the next login. You might have to reboot for `ddcutil` to detect your display.
 
 # Troubleshooting
