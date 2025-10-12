@@ -10,7 +10,7 @@ Extension relies on `ddcutil-service`. Installation process of `ddcutil-service`
 
 ## Dependencies
 
-* GNOME 46-48
+* GNOME 46-49
 * [_ddcutil-service_](https://github.com/digitaltrails/ddcutil-service)
 
 A convenient way to install GNOME extensions (including this extension) is to use [Extension Manager](https://flathub.org/apps/com.mattjakeman.ExtensionManager).
