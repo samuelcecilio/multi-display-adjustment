@@ -1,5 +1,7 @@
 import Gio from 'gi://Gio'
 
+import * as Main from 'resource:///org/gnome/shell/ui/main.js'
+
 import { devLog } from './code-convenience.js'
 
 class DdcutilService {
@@ -192,7 +194,20 @@ class DdcutilService {
 
         const ddcOnly = true
 
-        const reply = await this._proxy.DetectAsync(ddcOnly ? 0 : 1)
+        let reply;
+
+        try {
+            reply = await this._proxy.DetectAsync(ddcOnly ? 0 : 1)
+        } catch (exception) {
+            if (exception.message.includes("org.freedesktop.DBus.Error.ServiceUnknown")) {
+                Main.notify(
+                    "Display Adjustment extension",
+                    "ddcutil-service is not available or failed to start. Please install ddcutil-service and login again to get the brightness and contrast control sliders. Alternatively disable or remove Display Adjustment extension."
+                )
+            }
+
+            throw exception
+        }
 
         let ddcDisplays = { }
 
