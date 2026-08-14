@@ -2,116 +2,106 @@ import GObject from 'gi://GObject'
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js'
 
-import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js'
+import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js'
 import { SystemIndicator } from 'resource:///org/gnome/shell/ui/quickSettings.js'
 
-import { BrightnessSlider } from './brightness.js'
-import { ContrastSlider } from './contrast.js'
-import { areArraysEqual, devLog, setIntersection } from './code-convenience.js'
+import { areArraysEqual, devLog } from './code-convenience.js'
+import { DisplaysToggle } from './displays-menu.js'
 import { DisplayConfigService } from './display-config-service.js'
 import { DdcutilService } from './ddcutil-service.js'
+import { pairDisplays } from './display-pairing.js'
 
 
 const DisplaysAdjustmentsIndicator = GObject.registerClass(
 class DisplaysAdjustmentsIndicator extends SystemIndicator {
-    
+
 })
 
 export default class DisplaysAdjustmentsExtension extends Extension {
-    async _destroySliders() {
-        this._indicator.quickSettingsItems.forEach(item => item.destroy())
-        this._indicator.quickSettingsItems = []
-    }
+    async _syncDisplays() {
+        /**
+         * The extension can be disabled while these calls are in flight, for
+         * example by the screen locking, which nulls the fields of this class.
+         */
+        const displayConfigService = this._displayConfigService
+        const ddcutilService = this._ddcutilService
 
-    async _rebuildSliders() {
-        const mutterDisplays = await this._displayConfigService.getDisplays()
-        const ddcDisplays = await this._ddcutilService.getDisplays()
+        const mutterDisplays = await displayConfigService.getDisplays()
+        const ddcDisplays = await ddcutilService.getDisplays()
 
-        let ddcCapableDisplayIds = new Set()
-
-        for (const [key, ddcDisplay] of Object.entries(ddcDisplays)) {
-            ddcCapableDisplayIds.add(`${ddcDisplay.model}#${ddcDisplay.serial}`)
-        }
-
-        let enabledDisplaysIds = new Set()
-
-        for (const [key, display] of Object.entries(mutterDisplays)) {
-            if (!display["enabled"]) {
-                continue
-            }
-
-            enabledDisplaysIds.add(`${display.model}#${display.serial}`)
-        }
-
-        let slidersDisplaysIds = setIntersection(enabledDisplaysIds, ddcCapableDisplayIds)
-
-        devLog("[multi-display-adjustment] previous slider ids", Array.from(this._previousSlidersDisplaysIds), "slider ids", Array.from(slidersDisplaysIds))
-
-        if (areArraysEqual(Array.from(this._previousSlidersDisplaysIds), Array.from(slidersDisplaysIds)) && this._indicator.quickSettingsItems.length != 0) {
+        if (this._toggle === null) {
             return
         }
 
-        this._previousSlidersDisplaysIds = slidersDisplaysIds
+        const displays = pairDisplays(mutterDisplays, ddcDisplays)
 
-        this._destroySliders()
+        const signature = displays.map(display => `${display.key}#${display.displayId}#${display.name}#${display.connector}`)
 
-        for (const [key, mutterDisplay] of Object.entries(mutterDisplays)) {
-            if (! (key in ddcDisplays)) {
-                continue
-            }
+        devLog("[multi-display-adjustment] previous displays", this._previousSignature, "displays", signature)
 
-            if (! mutterDisplay["enabled"]) {
-                continue
-            }
-
-            const ddcDisplay = ddcDisplays[key]
-
-            const brightnessSlider = new BrightnessSlider(this._ddcutilService, ddcDisplay.displayId)
-            const contrastSlider = new ContrastSlider(this._ddcutilService, ddcDisplay.displayId)
-
-            this._indicator.quickSettingsItems.push(brightnessSlider)
-            this._indicator.quickSettingsItems.push(contrastSlider)
-            
-            brightnessSlider._fetchInitialBrightness()
-            contrastSlider._fetchInitialContrast()
+        if (areArraysEqual(signature, this._previousSignature)) {
+            return
         }
 
-        Main.panel.statusArea.quickSettings.addExternalIndicator(this._indicator, 2)
+        this._previousSignature = signature
+
+        this._toggle.setDisplays(displays)
     }
 
     async enable() {
         devLog("[multi-display-adjustment] Starting extension...")
 
-        this._previousSlidersDisplaysIds = new Set()
+        this._previousSignature = null
 
         this._displayConfigService = new DisplayConfigService()
         this._ddcutilService = new DdcutilService()
 
         this._indicator = new DisplaysAdjustmentsIndicator()
+        this._toggle = new DisplaysToggle(this._ddcutilService, this.dir.get_child('icons'))
 
-        await this._displayConfigService.init()
-        await this._ddcutilService._init()
+        this._indicator.quickSettingsItems.push(this._toggle)
 
-        this._monitorsChangedSignalHandle = this._displayConfigService._proxy.connectSignal('MonitorsChanged', (proxy, nameOwner, args) => {
-            this._rebuildSliders()
+        Main.panel.statusArea.quickSettings.addExternalIndicator(this._indicator)
+
+        const displayConfigService = this._displayConfigService
+        const ddcutilService = this._ddcutilService
+
+        await displayConfigService.init()
+        await ddcutilService._init()
+
+        /**
+         * disable can run while the proxies are being set up, for example when
+         * the screen locks right after login. Nothing may be connected then.
+         */
+        if (this._toggle === null) {
+            return
+        }
+
+        this._monitorsChangedSignalHandle = displayConfigService._proxy.connectSignal('MonitorsChanged', (proxy, nameOwner, args) => {
+            this._syncDisplays()
         })
 
-        await this._rebuildSliders()
+        await this._syncDisplays()
 
         devLog("[multi-display-adjustment] Done starting extension")
     }
 
     async disable() {
-        this._destroySliders()
+        if (this._monitorsChangedSignalHandle) {
+            this._displayConfigService._proxy.disconnectSignal(this._monitorsChangedSignalHandle)
+            this._monitorsChangedSignalHandle = null
+        }
+
+        this._indicator.quickSettingsItems.forEach(item => item.destroy())
+        this._indicator.quickSettingsItems = []
+        this._toggle = null
 
         this._indicator.destroy()
         this._indicator = null
 
-        this._displayConfigService._proxy.disconnectSignal(this._monitorsChangedSignalHandle)
-
         this._displayConfigService = null
         this._ddcutilService = null
 
-        this._previousSlidersDisplaysIds = null
+        this._previousSignature = null
     }
 }

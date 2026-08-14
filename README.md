@@ -2,7 +2,8 @@
 
 Offers sliders to control external displays' brightness and contrast through DDC/CI.
 
-Every connected display gets its own pair of sliders, labelled so you can tell them apart.
+A single _Displays_ entry in Quick Settings opens a menu where every connected display has its own
+brightness and contrast sliders, under the display name that Settings shows.
 
 ![](./screenshot.png)
 
@@ -19,7 +20,24 @@ Extension relies on `ddcutil-service`. Installation process of `ddcutil-service`
 * GNOME 46-50
 * [_ddcutil-service_](https://github.com/digitaltrails/ddcutil-service)
 
-A convenient way to install GNOME extensions (including this extension) is to use [Extension Manager](https://flathub.org/apps/com.mattjakeman.ExtensionManager).
+## Installation
+
+This extension is not on [extensions.gnome.org](https://extensions.gnome.org) yet, so it is installed
+from a package built here. Grab the `.shell-extension.zip` of the
+[latest release](https://github.com/samuelcecilio/multi-display-adjustment/releases/latest) and
+
+```bash
+gnome-extensions install --force multi-display-adjustment@cecilio.xyz.shell-extension.zip
+```
+
+Log out and back in, then enable it with
+
+```bash
+gnome-extensions enable multi-display-adjustment@cecilio.xyz
+```
+
+To build the package from a clone instead, run `make install` and log out and back in.
+[dev.md](./dev.md) covers working on the extension itself.
 
 ## Installation of _ddcutil-service_
 

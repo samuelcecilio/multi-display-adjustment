@@ -201,15 +201,20 @@ class DdcutilService {
         } catch (exception) {
             if (exception.message.includes("org.freedesktop.DBus.Error.ServiceUnknown")) {
                 Main.notify(
-                    "Display Adjustment extension",
-                    "ddcutil-service is not available or failed to start. Please install ddcutil-service and login again to get the brightness and contrast control sliders. Alternatively disable or remove Display Adjustment extension."
+                    "Multi Display Adjustment extension",
+                    "ddcutil-service is not available or failed to start. Please install ddcutil-service and login again to get the brightness and contrast control sliders. Alternatively disable or remove the Multi Display Adjustment extension."
                 )
             }
 
             throw exception
         }
 
-        let ddcDisplays = { }
+        /**
+         * Keyed by model and serial, which is how displays are matched against
+         * Mutter. A pair of identical displays can share that key, so every key
+         * holds a list, in detection order.
+         */
+        let ddcDisplays = new Map()
 
         for (const display of reply[1]) {
             const displayId = display[0]
@@ -225,44 +230,59 @@ class DdcutilService {
                 derivedSerial = serial
             }
 
-            ddcDisplays[`${model}#${derivedSerial}`] = { displayId, model, serial: derivedSerial }
+            const key = `${model}#${derivedSerial}`
+
+            if (!ddcDisplays.has(key)) {
+                ddcDisplays.set(key, [])
+            }
+
+            ddcDisplays.get(key).push({ displayId, model, serial: derivedSerial })
         }
 
-        devLog("[multi-display-adjustment] Retrieved displays from ddcutil-service", Object.values(ddcDisplays))
+        devLog("[multi-display-adjustment] Retrieved displays from ddcutil-service", Array.from(ddcDisplays.values()).flat())
 
         return ddcDisplays
     }
 
-    async _getBrightness(displayId) {
+    /**
+     * Reads a VCP feature, for example 0x10 (brightness) or 0x12 (contrast).
+     *
+     * Returns null when the display does not support the feature or when the
+     * service cannot be reached, so that callers can leave out the control
+     * instead of showing a slider that does nothing.
+     */
+    async getVcp(displayId, vcpCode) {
         // gdbus call --session --dest=com.ddcutil.DdcutilService --object-path /com/ddcutil/DdcutilObject --method com.ddcutil.DdcutilInterface.GetVcp 2 "" 16 0
 
-        const result = await this._proxy.GetVcpAsync(displayId, "", 16, 0)
-        const current = result[0]
-        const max = result[1]
-    
+        let result
+
+        try {
+            result = await this._proxy.GetVcpAsync(displayId, "", vcpCode, 0)
+        } catch (exception) {
+            devLog(`[multi-display-adjustment] Reading VCP ${vcpCode} of display ${displayId} failed`, exception.message)
+
+            return null
+        }
+
+        const [current, max, , errorStatus, errorMessage] = result
+
+        if (errorStatus !== 0) {
+            devLog(`[multi-display-adjustment] Display ${displayId} does not report VCP ${vcpCode}`, errorMessage)
+
+            return null
+        }
+
         return { current, max }
     }
 
-    async _setBrightness(displayId, newValue) {
+    async setVcp(displayId, vcpCode, newValue) {
         // gdbus call --session --dest=com.ddcutil.DdcutilService --object-path /com/ddcutil/DdcutilObject --method com.ddcutil.DdcutilInterface.SetVcp 2 "" 16 35 0
 
-        await this._proxy.SetVcpAsync(displayId, "", 16, newValue, 0)
-    }
-
-    async _getContrast(displayId) {
-        // gdbus call --session --dest=com.ddcutil.DdcutilService --object-path /com/ddcutil/DdcutilObject --method com.ddcutil.DdcutilInterface.GetVcp 2 "" 16 0
-
-        const result = await this._proxy.GetVcpAsync(displayId, "", 18, 0)
-        const current = result[0]
-        const max = result[1]
-    
-        return { current, max }
-    }
-
-    async _setContrast(displayId, newValue) {
-        // gdbus call --session --dest=com.ddcutil.DdcutilService --object-path /com/ddcutil/DdcutilObject --method com.ddcutil.DdcutilInterface.SetVcp 2 "" 16 35 0
-
-        await this._proxy.SetVcpAsync(displayId, "", 18, newValue, 0)
+        try {
+            await this._proxy.SetVcpAsync(displayId, "", vcpCode, newValue, 0)
+        } catch (exception) {
+            devLog(`[multi-display-adjustment] Writing VCP ${vcpCode} of display ${displayId} failed`, exception.message)
+        }
     }
 
     async _toggleDynamicSleep(enable) {

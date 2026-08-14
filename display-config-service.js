@@ -1,6 +1,6 @@
 import Gio from 'gi://Gio'
 
-import { devLog, getPossibleBoolean, startsWith } from './code-convenience.js'
+import { devLog, getPossibleBoolean, getPossibleString, startsWith } from './code-convenience.js'
 
 
 class DisplayConfigService {
@@ -73,14 +73,13 @@ class DisplayConfigService {
 
     /**
      * It only affects the order of the displays in the menu.
-     * 
+     *
      * Ordering left to right is simple but not ideal when
-     * dealing with mulptiple rows of displays.
+     * dealing with mulptiple rows of displays. Displays sharing
+     * a column are ordered top to bottom.
      */
-    _orderLeftToRight(preset) {
-        return Object.fromEntries(
-            Object.entries(preset).sort(([, a],[, b]) => a.x - b.x)
-        )
+    _orderLeftToRight(displays) {
+        return [...displays].sort((a, b) => a.x - b.x || a.y - b.y)
     }
 
     async _getLayoutFromMutter() {
@@ -93,8 +92,10 @@ class DisplayConfigService {
         for (const monitor of currentState[1]) {
             const monitorSpec = monitor[0]
             const modes = monitor[1]
+            const monitorProperties = monitor[2]
 
             const connector = monitorSpec[0]
+            const vendor = monitorSpec[1]
             const model = monitorSpec[2]
             const serial = monitorSpec[3]
 
@@ -102,14 +103,23 @@ class DisplayConfigService {
                 continue
             }
 
+            /**
+             * Mutter exposes the same human readable name that Settings shows,
+             * for example `LG Electronics 27"`. It is localized and it is a nicer
+             * label than the raw EDID model, so it is preferred when available.
+             */
+            const name = getPossibleString(monitorProperties, "display-name") || `${vendor} ${model}`.trim() || connector
+
             for (const mode of modes) {
                 const modeProperties = mode[6]
 
                 if (getPossibleBoolean(modeProperties, "is-current")) {
                     layout[connector] = {
                         connector,
+                        vendor,
                         model,
                         serial,
+                        name,
                         width: mode[1],
                         height: mode[2],
                         enabled: true
@@ -126,8 +136,10 @@ class DisplayConfigService {
                     if (getPossibleBoolean(modeProperties, "is-preferred")) {
                         layout[connector] = {
                             connector,
+                            vendor,
                             model,
                             serial,
+                            name,
                             width: mode[1],
                             height: mode[2],
                             enabled: false
@@ -142,10 +154,17 @@ class DisplayConfigService {
         for (const logicalMonitor of currentState[2]) {
             const x = logicalMonitor[0]
             const y = logicalMonitor[1]
-            const connector = logicalMonitor[5][0][0]
 
-            layout[connector]["x"] = x
-            layout[connector]["y"] = y
+            for (const monitorSpec of logicalMonitor[5]) {
+                const connector = monitorSpec[0]
+
+                if (!(connector in layout)) {
+                    continue
+                }
+
+                layout[connector]["x"] = x
+                layout[connector]["y"] = y
+            }
         }
 
         devLog("[multi-display-adjustment] Retrieved displays layout from Mutter", Object.values(layout))
@@ -153,24 +172,22 @@ class DisplayConfigService {
         return Object.values(layout)
     }
 
-    async _getLayoutFromMutterMap() {
+    /**
+     * Enabled displays, ordered by position, each one carrying the key
+     * that ddcutil-service displays are matched against.
+     *
+     * Two displays of the same model can report the same key, so the result
+     * is a list and not a map. Collapsing them into a map used to hide one
+     * of the two sliders on setups with a pair of identical displays.
+     */
+    async getDisplays() {
         const layout = await this._getLayoutFromMutter()
 
-        let layoutMap = {}
+        const enabledDisplays = layout
+            .filter(display => display["enabled"])
+            .map(display => ({ ...display, key: `${display["model"]}#${display["serial"]}` }))
 
-        for (const display of layout) {
-            if (!display["enabled"]) {
-                continue
-            }
-
-            layoutMap[`${display["model"]}#${display["serial"]}`] = display
-        }
-
-        return layoutMap
-    }
-
-    async getDisplays() {
-        return this._orderLeftToRight(await this._getLayoutFromMutterMap())
+        return this._orderLeftToRight(enabledDisplays)
     }
 }
 
