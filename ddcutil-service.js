@@ -228,7 +228,7 @@ class DdcutilService {
             ddcDisplays[`${model}#${derivedSerial}`] = { displayId, model, serial: derivedSerial }
         }
 
-        devLog("[display-adjustment] Retrieved displays from ddcutil-service", Object.values(ddcDisplays))
+        devLog("[multi-display-adjustment] Retrieved displays from ddcutil-service", Object.values(ddcDisplays))
 
         return ddcDisplays
     }

@@ -45,7 +45,7 @@ export default class DisplaysAdjustmentsExtension extends Extension {
 
         let slidersDisplaysIds = setIntersection(enabledDisplaysIds, ddcCapableDisplayIds)
 
-        devLog("[display-adjustment] previous slider ids", Array.from(this._previousSlidersDisplaysIds), "slider ids", Array.from(slidersDisplaysIds))
+        devLog("[multi-display-adjustment] previous slider ids", Array.from(this._previousSlidersDisplaysIds), "slider ids", Array.from(slidersDisplaysIds))
 
         if (areArraysEqual(Array.from(this._previousSlidersDisplaysIds), Array.from(slidersDisplaysIds)) && this._indicator.quickSettingsItems.length != 0) {
             return
@@ -80,7 +80,7 @@ export default class DisplaysAdjustmentsExtension extends Extension {
     }
 
     async enable() {
-        devLog("[display-adjustment] Starting extension...")
+        devLog("[multi-display-adjustment] Starting extension...")
 
         this._previousSlidersDisplaysIds = new Set()
 
@@ -98,7 +98,7 @@ export default class DisplaysAdjustmentsExtension extends Extension {
 
         await this._rebuildSliders()
 
-        devLog("[display-adjustment] Done starting extension")
+        devLog("[multi-display-adjustment] Done starting extension")
     }
 
     async disable() {

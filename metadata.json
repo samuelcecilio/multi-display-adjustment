@@ -1,8 +1,8 @@
 {
-  "name": "Display Adjustment",
-  "description": "Offers sliders to control external displays' brightness and contrast through DDC. Extension requires ddcutil-service to be installed.\nInstallation process of ddcutil-service is quick and non-intrusive. The details can be found at https://gitlab.com/w8jcik/display-adjustment#installation-of-ddcutil-service. ddcutil-service allows more responsive communication with the displays than ddcutil.",
-  "uuid": "display-adjustment@w8jcik.gitlab.com",
-  "url": "https://gitlab.com/w8jcik/display-adjustment",
+  "name": "Multi Display Adjustment",
+  "description": "Offers per-display sliders to control external displays' brightness and contrast through DDC/CI. Each connected display gets its own labelled pair of sliders in Quick Settings.\nExtension requires ddcutil-service to be installed. Installation process of ddcutil-service is quick and non-intrusive. The details can be found at https://github.com/samuelcecilio/multi-display-adjustment#installation-of-ddcutil-service. ddcutil-service allows more responsive communication with the displays than ddcutil.",
+  "uuid": "multi-display-adjustment@cecilio.xyz",
+  "url": "https://github.com/samuelcecilio/multi-display-adjustment",
   "shell-version": [ "46", "47", "48", "49", "50" ],
-  "version-name": "0.0.8"
+  "version-name": "0.1.0"
 }

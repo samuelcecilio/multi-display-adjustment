@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 
-rm -rf ~/.local/share/gnome-shell/extensions/display-adjustment@w8jcik.gitlab.com
-mkdir -p ~/.local/share/gnome-shell/extensions/display-adjustment@w8jcik.gitlab.com
+UUID=multi-display-adjustment@cecilio.xyz
+TARGET=~/.local/share/gnome-shell/extensions/$UUID
 
-rsync -a ./ --exclude dev.md --exclude .gitignore --exclude .git --exclude dist.sh --exclude README.md --exclude troubleshooting.md ~/.local/share/gnome-shell/extensions/display-adjustment@w8jcik.gitlab.com/
+rm -rf "$TARGET"
+mkdir -p "$TARGET"
+
+rsync -a ./ --exclude dev.md --exclude .gitignore --exclude .git --exclude dist.sh --exclude README.md --exclude troubleshooting.md --exclude CHANGELOG.md "$TARGET"/
 rm -f dist.zip
-zip -rj dist.zip ~/.local/share/gnome-shell/extensions/display-adjustment@w8jcik.gitlab.com
+zip -rj dist.zip "$TARGET"

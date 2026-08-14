@@ -21,7 +21,7 @@ In case `ddcutil` commands do not work:
 - Search in [the past issues of ddcutil](https://github.com/rockowitz/ddcutil/issues) using your monitor model or the error message.
 - Finally consider opening an issue in the `ddcutil` project.
 
-In case `ddcutil` works then this extension is at fault. Create [an issue](https://gitlab.com/w8jcik/display-adjustment/-/issues) in this project. Please attach:
+In case `ddcutil` works then this extension is at fault. Create [an issue](https://github.com/samuelcecilio/multi-display-adjustment/issues) in this project. Please attach:
 
 - Output from
   ```sh
@@ -38,7 +38,7 @@ In case `ddcutil` works then this extension is at fault. Create [an issue](https
   gdbus call --session --dest=com.ddcutil.DdcutilService --object-path /com/ddcutil/DdcutilObject --method com.ddcutil.DdcutilInterface.Detect 8
   ```
 
-- The error message visible in Alt + F2, `lg`, _Extensions_, _Display Adjustment_, _Show Errors_.
+- The error message visible in Alt + F2, `lg`, _Extensions_, _Multi Display Adjustment_, _Show Errors_.
 
 - Output from (optional):
   ```sh
@@ -48,7 +48,7 @@ In case `ddcutil` works then this extension is at fault. Create [an issue](https
 
 - Extra debug output from this extension (optional):
 
-  1. Edit `~/.local/share/gnome-shell/extensions/display-adjustment@w8jcik.gitlab.com/code-convenience.js` 
+  1. Edit `~/.local/share/gnome-shell/extensions/multi-display-adjustment@cecilio.xyz/code-convenience.js` 
      ```diff
        function devLog(...args) {
          // Enable during development to see the logs in journalctl -xef
@@ -61,7 +61,7 @@ In case `ddcutil` works then this extension is at fault. Create [an issue](https
   4. Call `journalctl -xef`
   5. Enable this extension.
 
-  Just after enabling the extension, messages will appear in the terminal marked with `[display-adjustment] ...` prefix. Copy them.
+  Just after enabling the extension, messages will appear in the terminal marked with `[multi-display-adjustment] ...` prefix. Copy them.
 
 ## Known issues
 

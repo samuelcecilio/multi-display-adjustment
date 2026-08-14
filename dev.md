@@ -3,9 +3,13 @@
 ## Clone
 
 ```bash
-cd ~/.local/share/gnome-shell/extensions
-git clone git@gitlab.com:w8jcik/toggle-displays.git display-adjustment@w8jcik.gitlab.com
+git clone git@github.com:samuelcecilio/multi-display-adjustment.git ~/Code/multi-display-adjustment
+ln -s ~/Code/multi-display-adjustment \
+      ~/.local/share/gnome-shell/extensions/multi-display-adjustment@cecilio.xyz
 ```
+
+The symlink means edits in the working tree are picked up by the next shell restart,
+with no need to run `./dist.sh`.
 
 ## Start
 
@@ -32,13 +36,13 @@ Example retrieval of display configuration from Mutter using GJS
 // gdbus call --session --dest=org.gnome.Mutter.DisplayConfig --object-path /org/gnome/Mutter/DisplayConfig --method org.gnome.Mutter.DisplayConfig.GetResources
 
 const displayResources = await proxy.GetResourcesAsync()
-console.log("[display-adjustment] Display resources", displayResources)
+console.log("[multi-display-adjustment] Display resources", displayResources)
 const [rawSerial, crtcs, outputs, modes] = displayResources
 
 // gdbus call --session --dest=org.gnome.Mutter.DisplayConfig --object-path /org/gnome/Mutter/DisplayConfig --method org.gnome.Mutter.DisplayConfig.GetCurrentState
 
 const currentState = await proxy.GetCurrentStateAsync()
-console.log("[display-adjustment] Current displays state", currentState)
+console.log("[multi-display-adjustment] Current displays state", currentState)
 const [rawSerial, monitors, logicalMonitors, properties] = currentState
 ```
 

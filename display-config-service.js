@@ -46,7 +46,7 @@ class DisplayConfigService {
         </node>`
 
     async _initProxy() {
-        devLog("[display-adjustment] Initializing DisplayConfig DBus proxy...")
+        devLog("[multi-display-adjustment] Initializing DisplayConfig DBus proxy...")
 
         const TestProxy = Gio.DBusProxy.makeProxyWrapper(this._displayConfigInterface)
 
@@ -64,7 +64,7 @@ class DisplayConfigService {
             )
         })
 
-        devLog("[display-adjustment] DisplayConfig DBus proxy is ready")
+        devLog("[multi-display-adjustment] DisplayConfig DBus proxy is ready")
     }
 
     async init() {
@@ -84,7 +84,7 @@ class DisplayConfigService {
     }
 
     async _getLayoutFromMutter() {
-        devLog("[display-adjustment] Retrieving displays layout from Mutter...")
+        devLog("[multi-display-adjustment] Retrieving displays layout from Mutter...")
 
         const currentState = await this._proxy.GetCurrentStateAsync()
 
@@ -148,7 +148,7 @@ class DisplayConfigService {
             layout[connector]["y"] = y
         }
 
-        devLog("[display-adjustment] Retrieved displays layout from Mutter", Object.values(layout))
+        devLog("[multi-display-adjustment] Retrieved displays layout from Mutter", Object.values(layout))
 
         return Object.values(layout)
     }
