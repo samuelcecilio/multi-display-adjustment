@@ -3,7 +3,15 @@
 Offers sliders to control external displays' brightness and contrast through DDC/CI.
 
 A single _Displays_ entry in Quick Settings opens a menu where every connected display has its own
-brightness and contrast sliders, under the display name that Settings shows.
+brightness and contrast sliders, under the display name that Settings shows. Each slider shows the
+level as a number from 0 to 100.
+
+The menu's _Display Adjustment Settings_ item (or the gear in the Extensions app) opens preferences:
+
+* **Adjust all displays together** — one brightness slider and one contrast slider set the same
+  percentage on every display. Until the slider is moved, it shows the average of the current
+  levels; it does not write to the displays just by turning the option on.
+* **Show contrast sliders** — turn this off to keep only brightness.
 
 ![](./screenshot.png)
 
