@@ -88,7 +88,7 @@ export default class DisplaysAdjustmentsExtension extends Extension {
         devLog("[multi-display-adjustment] Done starting extension")
     }
 
-    async disable() {
+    disable() {
         if (this._monitorsChangedSignalHandle) {
             this._displayConfigService._proxy.disconnectSignal(this._monitorsChangedSignalHandle)
             this._monitorsChangedSignalHandle = null
