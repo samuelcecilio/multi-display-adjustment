@@ -35,8 +35,6 @@ class VcpSliderItem extends PopupMenu.PopupBaseMenuItem {
         this._targets = []
         this._destroyed = false
 
-        this.connect('destroy', () => (this._destroyed = true))
-
         this.add_child(new St.Icon({
             gicon,
             style_class: 'popup-menu-icon'
@@ -56,6 +54,12 @@ class VcpSliderItem extends PopupMenu.PopupBaseMenuItem {
         this.add_child(this._valueLabel)
 
         this._sliderChangedId = this._slider.connect('notify::value', this._onSliderChanged.bind(this))
+
+        this.connect('destroy', () => {
+            this._destroyed = true
+            this._slider.disconnect(this._sliderChangedId)
+            this._sliderChangedId = 0
+        })
     }
 
     /**
