@@ -8,6 +8,14 @@ at commit `d0857f0` ("Correct dependency range", 2026-04-07), which was released
 The full history before that commit is the upstream author's work and is preserved in this
 repository — use `git log` and `git blame` for per-line authorship.
 
+## 1.1.1 (2026-09-16)
+
+### Changed
+
+* `disable()` is synchronous. The shell does not await it, and nothing inside needed a promise.
+* Slider items disconnect their `notify::value` handler when destroyed. The slider dies with the
+  item anyway, but the extensions.gnome.org linter (EGO-L-003) wants the disconnect to be explicit.
+
 ## 1.1.0 (2026-09-16)
 
 ### Added
