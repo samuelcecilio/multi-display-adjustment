@@ -17,8 +17,9 @@ OUT_DIR="$SOURCE_DIR/dist"
 PACKAGE="$OUT_DIR/$UUID.shell-extension.zip"
 INSTALL_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/gnome-shell/extensions/$UUID"
 
-# metadata.json and extension.js are picked up automatically. Everything else,
-# including the license, has to be listed.
+# metadata.json, extension.js, prefs.js and stylesheet.css are picked up
+# automatically, and schemas/*.gschema.xml is compiled into the package.
+# Everything else, including the license, has to be listed.
 EXTRA_SOURCES=(
     COPYING
     code-convenience.js

@@ -8,6 +8,23 @@ at commit `d0857f0` ("Correct dependency range", 2026-04-07), which was released
 The full history before that commit is the upstream author's work and is preserved in this
 repository — use `git log` and `git blame` for per-line authorship.
 
+## 1.1.0 (2026-09-16)
+
+### Added
+
+* Displays can be adjusted together. One brightness slider and one contrast slider apply the same
+  percentage to every connected display.
+* Each slider shows the current level as a number from 0 to 100.
+* Contrast sliders can be hidden, leaving only brightness.
+* A preferences window holds those two options. The Quick Settings menu opens it through a
+  _Display Adjustment Settings_ item.
+
+### Changed
+
+* Writes are coalesced: one DDC write stays in flight per display, and the last position of a drag
+  always arrives. Values used to be quantized to twentieths of the range, which made the on-screen
+  number disagree with what was written and often swallowed Left/Right key presses.
+
 ## 1.0.0 (2026-08-14)
 
 ### Added
