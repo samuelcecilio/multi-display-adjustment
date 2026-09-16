@@ -3,6 +3,7 @@ import Gio from 'gi://Gio'
 import GObject from 'gi://GObject'
 import St from 'gi://St'
 
+import * as Main from 'resource:///org/gnome/shell/ui/main.js'
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js'
 
 import { gettext as _, ngettext } from 'resource:///org/gnome/shell/extensions/extension.js'
@@ -16,26 +17,22 @@ const BRIGHTNESS_VCP_CODE = 0x10
 const CONTRAST_VCP_CODE = 0x12
 
 /**
- * Displays are written to in twentieths of their range. DDC/CI writes are slow
- * and every intermediate value of a drag would otherwise be sent to the display.
- */
-const STEPS = 20
-
-/**
- * A slider bound to a single VCP feature of a single display, laid out as a
- * menu item so that several of them fit in one dropdown. The shell uses the
- * same shape for the keyboard backlight in `status/backlight.js`.
+ * A slider bound to one VCP feature on one or more displays, laid out as a menu
+ * item so that several of them fit in one dropdown. The shell uses the same
+ * shape for the keyboard backlight in `status/backlight.js`.
+ *
+ * DDC/CI writes are slow. One write is kept in flight per display; later values
+ * from a drag replace the pending one so the last position always arrives.
  */
 const VcpSliderItem = GObject.registerClass(
 class VcpSliderItem extends PopupMenu.PopupBaseMenuItem {
-    _init(ddcutilService, displayId, vcpCode, gicon, accessibleName) {
+    _init(ddcutilService, displayIds, vcpCode, gicon, accessibleName) {
         super._init({ activate: false })
 
         this._ddcutilService = ddcutilService
-        this._displayId = displayId
+        this._displayIds = displayIds
         this._vcpCode = vcpCode
-        this._maxValue = 100
-        this._previousValue = null
+        this._targets = []
         this._destroyed = false
 
         this.connect('destroy', () => (this._destroyed = true))
@@ -51,49 +48,96 @@ class VcpSliderItem extends PopupMenu.PopupBaseMenuItem {
 
         this.add_child(this._slider)
 
+        this._valueLabel = new St.Label({
+            text: '0',
+            style_class: 'mda-slider-value',
+            y_align: Clutter.ActorAlign.CENTER
+        })
+        this.add_child(this._valueLabel)
+
         this._sliderChangedId = this._slider.connect('notify::value', this._onSliderChanged.bind(this))
     }
 
     /**
-     * Reads the current value from the display. Returns false when the display
-     * does not support the feature, in which case the item stays hidden.
+     * Reads the current value from every display. Returns false when none of
+     * them support the feature, in which case the item stays hidden.
      */
     async fetchValue() {
-        const value = await this._ddcutilService.getVcp(this._displayId, this._vcpCode)
+        const values = await Promise.all(
+            this._displayIds.map(id => this._ddcutilService.getVcp(id, this._vcpCode)))
 
         if (this._destroyed) {
             return false
         }
 
-        if (value === null || !value.max) {
+        this._targets = []
+        const fractions = []
+
+        values.forEach((value, i) => {
+            if (value !== null && value.max) {
+                this._targets.push({
+                    displayId: this._displayIds[i],
+                    max: value.max,
+                    lastWritten: value.current,
+                    pending: null,
+                    writing: false
+                })
+                fractions.push(value.current / value.max)
+            }
+        })
+
+        if (this._targets.length === 0) {
             this.hide()
 
             return false
         }
 
-        this._maxValue = value.max
-        this._previousValue = value.current
+        const mean = fractions.reduce((sum, fraction) => sum + fraction, 0) / fractions.length
 
         this._slider.block_signal_handler(this._sliderChangedId)
-        this._slider.value = value.current / value.max
+        this._slider.value = mean
         this._slider.unblock_signal_handler(this._sliderChangedId)
-
+        this._updateLabel()
         this.show()
 
         return true
     }
 
-    _onSliderChanged() {
-        const step = this._maxValue / STEPS
-        const value = Math.round(this._slider.value * this._maxValue / step) * step
+    _updateLabel() {
+        this._valueLabel.text = `${Math.round(this._slider.value * 100)}`
+    }
 
-        if (value === this._previousValue) {
+    _onSliderChanged() {
+        this._updateLabel()
+
+        for (const target of this._targets) {
+            this._queueWrite(target, Math.round(this._slider.value * target.max))
+        }
+    }
+
+    _queueWrite(target, value) {
+        if (value === target.lastWritten && target.pending === null) {
             return
         }
 
-        this._previousValue = value
+        target.pending = value
 
-        this._ddcutilService.setVcp(this._displayId, this._vcpCode, value)
+        if (!target.writing) {
+            this._drain(target)
+        }
+    }
+
+    async _drain(target) {
+        target.writing = true
+
+        while (target.pending !== null) {
+            const value = target.pending
+            target.pending = null
+            target.lastWritten = value
+            await this._ddcutilService.setVcp(target.displayId, this._vcpCode, value)
+        }
+
+        target.writing = false
     }
 
     /**
@@ -123,7 +167,7 @@ class DisplaysToggle extends QuickMenuToggle {
      * icon since GNOME 47 trimmed its legacy set, so the extension ships one.
      * The `-symbolic.svg` suffix is what makes the shell recolour it.
      */
-    _init(ddcutilService, iconsDirectory) {
+    _init(ddcutilService, iconsDirectory, settings, openPreferences) {
         super._init({
             title: _('Displays'),
             iconName: 'display-brightness-symbolic'
@@ -139,6 +183,8 @@ class DisplaysToggle extends QuickMenuToggle {
         }
 
         this._ddcutilService = ddcutilService
+        this._settings = settings
+        this._displays = []
         this._destroyed = false
 
         this._brightnessIcon = new Gio.ThemedIcon({ name: 'display-brightness-symbolic' })
@@ -154,6 +200,20 @@ class DisplaysToggle extends QuickMenuToggle {
 
         this.menu.setHeader('display-brightness-symbolic', _('Displays'))
 
+        this._section = new PopupMenu.PopupMenuSection()
+        this.menu.addMenuItem(this._section)
+
+        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem())
+        this.menu.addAction(_('Display Adjustment Settings'), () => {
+            Main.panel.closeQuickSettings()
+            openPreferences()
+        })
+
+        this._settings.connectObject(
+            'changed::group-displays', () => this._rebuild(),
+            'changed::show-contrast', () => this._rebuild(),
+            this)
+
         this.connect('clicked', () => this.menu.toggle())
         this.connect('destroy', () => (this._destroyed = true))
 
@@ -161,24 +221,35 @@ class DisplaysToggle extends QuickMenuToggle {
     }
 
     setDisplays(displays) {
+        this._displays = displays
+        this._rebuild()
+    }
+
+    _rebuild() {
         this._generation++
+        this._section.removeAll()
 
-        this.menu.removeAll()
+        const showContrast = this._settings.get_boolean('show-contrast')
+        const grouped = this._settings.get_boolean('group-displays') && this._displays.length >= 2
 
-        for (const display of displays) {
-            this._addDisplay(display, this._generation)
+        if (grouped) {
+            this._addGroup(this._displays, showContrast, this._generation)
+        } else {
+            for (const display of this._displays) {
+                this._addDisplay(display, showContrast, this._generation)
+            }
         }
 
-        this.visible = displays.length > 0
+        this.visible = this._displays.length > 0
 
-        if (displays.length === 1) {
-            this.subtitle = displays[0].name
+        if (this._displays.length === 1) {
+            this.subtitle = this._displays[0].name
         } else {
-            this.subtitle = ngettext('%d display', '%d displays', displays.length).format(displays.length)
+            this.subtitle = ngettext('%d display', '%d displays', this._displays.length).format(this._displays.length)
         }
     }
 
-    _addDisplay(display, generation) {
+    _addDisplay(display, showContrast, generation) {
         const heading = new PopupMenu.PopupSeparatorMenuItem(display.name)
 
         /**
@@ -192,34 +263,62 @@ class DisplaysToggle extends QuickMenuToggle {
             opacity: 150
         }))
 
-        this.menu.addMenuItem(heading)
+        this._section.addMenuItem(heading)
 
         const brightness = new VcpSliderItem(
-            this._ddcutilService, display.displayId, BRIGHTNESS_VCP_CODE,
+            this._ddcutilService, [display.displayId], BRIGHTNESS_VCP_CODE,
             this._brightnessIcon, _('Brightness of %s').format(display.name)
         )
+        this._section.addMenuItem(brightness)
 
-        const contrast = new VcpSliderItem(
-            this._ddcutilService, display.displayId, CONTRAST_VCP_CODE,
-            this._contrastIcon, _('Contrast of %s').format(display.name)
-        )
+        let contrast = null
 
-        this.menu.addMenuItem(brightness)
-        this.menu.addMenuItem(contrast)
+        if (showContrast) {
+            contrast = new VcpSliderItem(
+                this._ddcutilService, [display.displayId], CONTRAST_VCP_CODE,
+                this._contrastIcon, _('Contrast of %s').format(display.name)
+            )
+            this._section.addMenuItem(contrast)
+        }
 
-        this._fetchValues(display, heading, brightness, contrast, generation)
+        this._fetchValues(display.name, heading, brightness, contrast, generation)
     }
 
-    async _fetchValues(display, heading, brightness, contrast, generation) {
+    _addGroup(displays, showContrast, generation) {
+        const heading = new PopupMenu.PopupSeparatorMenuItem(_('All displays'))
+        this._section.addMenuItem(heading)
+
+        const displayIds = displays.map(display => display.displayId)
+
+        const brightness = new VcpSliderItem(
+            this._ddcutilService, displayIds, BRIGHTNESS_VCP_CODE,
+            this._brightnessIcon, _('Brightness of all displays')
+        )
+        this._section.addMenuItem(brightness)
+
+        let contrast = null
+
+        if (showContrast) {
+            contrast = new VcpSliderItem(
+                this._ddcutilService, displayIds, CONTRAST_VCP_CODE,
+                this._contrastIcon, _('Contrast of all displays')
+            )
+            this._section.addMenuItem(contrast)
+        }
+
+        this._fetchValues(_('All displays'), heading, brightness, contrast, generation)
+    }
+
+    async _fetchValues(label, heading, brightness, contrast, generation) {
         const hasBrightness = await brightness.fetchValue()
-        const hasContrast = await contrast.fetchValue()
+        const hasContrast = contrast ? await contrast.fetchValue() : false
 
         if (this._destroyed || generation !== this._generation) {
             return
         }
 
         if (!hasBrightness && !hasContrast) {
-            devLog("[multi-display-adjustment] No adjustable features on display", display.name)
+            devLog("[multi-display-adjustment] No adjustable features on display", label)
 
             heading.hide()
         }

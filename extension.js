@@ -57,7 +57,9 @@ export default class DisplaysAdjustmentsExtension extends Extension {
         this._ddcutilService = new DdcutilService()
 
         this._indicator = new DisplaysAdjustmentsIndicator()
-        this._toggle = new DisplaysToggle(this._ddcutilService, this.dir.get_child('icons'))
+        this._toggle = new DisplaysToggle(
+            this._ddcutilService, this.dir.get_child('icons'),
+            this.getSettings(), () => this.openPreferences())
 
         this._indicator.quickSettingsItems.push(this._toggle)
 

@@ -4,8 +4,10 @@ SOURCE_DIR = $(CURDIR)
 INSTALL_DIR = $(HOME)/.local/share/gnome-shell/extensions/$(UUID)
 
 JS_SOURCES = $(wildcard *.js)
+SCHEMAS_DIR = schemas
+SCHEMAS_COMPILED = $(SCHEMAS_DIR)/gschemas.compiled
 
-.PHONY: help pack install link unlink uninstall enable disable status check nested logs
+.PHONY: help pack install link unlink uninstall enable disable status check nested logs schemas
 
 help:
 	@echo "Getting the extension into the shell (pick one)"
@@ -22,6 +24,7 @@ help:
 	@echo "  make pack       only build dist/$(UUID).shell-extension.zip"
 	@echo "  make check      look for syntax errors in the sources"
 	@echo "  make nested     start a throwaway shell to catch startup errors"
+	@echo "  make schemas    compile GSettings schemas for a symlink install"
 	@echo "  make logs       follow the shell log"
 
 pack:
@@ -31,7 +34,14 @@ pack:
 install:
 	./dist.sh --install
 
-link:
+schemas: $(SCHEMAS_COMPILED)
+
+$(SCHEMAS_COMPILED): $(wildcard $(SCHEMAS_DIR)/*.gschema.xml)
+	glib-compile-schemas --strict $(SCHEMAS_DIR)
+
+# getSettings() looks for schemas/gschemas.compiled in the extension directory,
+# which for a symlink is this working tree.
+link: schemas
 	@if [ -e "$(INSTALL_DIR)" ] && [ ! -L "$(INSTALL_DIR)" ]; then \
 	    echo "$(INSTALL_DIR) is an installed copy. Run 'make uninstall' first." >&2; \
 	    exit 1; \
@@ -92,7 +102,8 @@ check:
 
 # The displays of this session are virtual and have no DDC/CI, so no sliders
 # show up in it. It is for seeing whether the extension starts without errors.
-nested:
+# The compiled schema is required: getSettings() throws if it is missing.
+nested: schemas
 	dbus-run-session -- gnome-shell --headless --virtual-monitor 1920x1080 --virtual-monitor 1280x1024
 
 logs:

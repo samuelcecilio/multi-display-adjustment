@@ -19,6 +19,16 @@ make link
 ```
 
 Edits in the working tree are picked up by the next shell restart, with no need to rebuild.
+`make link` compiles `schemas/` first: `getSettings()` looks for `schemas/gschemas.compiled` in
+the extension directory, which for a symlink is this working tree. Re-run `make schemas` after
+changing a `.gschema.xml` file.
+
+The compiled schema can also be exercised without logging out:
+
+```bash
+gsettings --schemadir schemas set org.gnome.shell.extensions.multi-display-adjustment group-displays true
+gsettings --schemadir schemas set org.gnome.shell.extensions.multi-display-adjustment show-contrast false
+```
 
 > [!WARNING]
 > While this symlink exists, never run `gnome-extensions install --force`. It empties the extension
@@ -70,6 +80,8 @@ It runs GNOME Shell headless, because GNOME Shell 50 dropped both `--nested` and
 `MUTTER_DEBUG_DUMMY_MODE_SPECS`. Displays are simulated by repeating `--virtual-monitor`.
 
 `make check` parses the sources, which catches a syntax error without starting a shell at all.
+`make nested` compiles the GSettings schema first, because `getSettings()` throws if
+`schemas/gschemas.compiled` is missing.
 
 ## Dbus examples
 
