@@ -50,7 +50,7 @@ gsettings --schemadir ~/.local/share/gnome-shell/extensions/multi-display-adjust
 
 ## Dependencies
 
-* GNOME 46-50
+* GNOME 46-51
 * [_ddcutil-service_](https://github.com/digitaltrails/ddcutil-service)
 
 ## Installation

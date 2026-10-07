@@ -10,6 +10,11 @@ repository — use `git log` and `git blame` for per-line authorship.
 
 ## Unreleased
 
+### Added
+
+* GNOME 51 support, with the inline sliders too. Left and Right still move the sliders of the tile
+  there, where they would otherwise do nothing.
+
 ### Changed
 
 * The description of the extension no longer says the sliders next to the brightness slider of
