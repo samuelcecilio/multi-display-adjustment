@@ -76,19 +76,19 @@ gnome-extensions enable multi-display-adjustment@cecilio.xyz
 To build the package from a clone instead, run `make install` and log out and back in.
 [dev.md](./dev.md) covers working on the extension itself.
 
-## Installation of _ddcutil-service_
+### ddcutil-service
 
 `ddcutil-service` can be installed from a package or built and installed from the source code.
 
-### From a package
+#### From a package
 
 * [Ubuntu and Debian packages](https://gitlab.com/w8jcik/ddcutil-service.deb)
 * [Arch AUR package](https://aur.archlinux.org/packages/ddcutil-service)
 * [OpenSUSE packages](https://software.opensuse.org/package/ddcutil-service)
 
-### Build by yourself
+#### Build by yourself
 
-1. __Install dependencies `ddcutil`, `libddcutil` and `glib`__  
+1. __Install dependencies `ddcutil`, `libddcutil` and `glib`__
 
    On Ubuntu and Debian
 
@@ -113,7 +113,7 @@ To build the package from a clone instead, run `make install` and log out and ba
 
    Service installs to `~/.local/share/dbus-1/services/com.ddcutil.DdcutilService.service` and  `~/.local/bin/ddcutil-service`. It is activated after the next login. You might have to reboot for `ddcutil` to detect your display.
 
-### Access to the displays
+#### Access to the displays
 
 `ddcutil` reaches the displays through the `/dev/i2c-*` devices, which the `i2c-dev` kernel module
 provides. Usually nothing has to be set up: `ddcutil` installs a udev rule that gives the logged-in
