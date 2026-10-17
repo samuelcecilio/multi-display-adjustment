@@ -21,9 +21,9 @@ own screen.
 
 ### 1. Installation of ddcutil-service
 
-* **Arch Linux** — `yay -S ddcutil-service`
-* **openSUSE** — `sudo zypper install ddcutil-service`
-* **Debian 12 and 13, Ubuntu 24.04 to 26.04** — unofficial `amd64` packages by Maciej Wójcik:
+* [**Arch Linux**](https://aur.archlinux.org/packages/ddcutil-service) — `yay -S ddcutil-service`
+* [**openSUSE**](https://software.opensuse.org/package/ddcutil-service) — `sudo zypper install ddcutil-service`
+* [**Debian 12 and 13, Ubuntu 24.04 to 26.04**](https://gitlab.com/w8jcik/ddcutil-service.deb#latest) — unofficial `amd64` packages by Maciej Wójcik:
 
   ```bash
   . /etc/os-release # Read distro-ver variables for next command. Equal to "source /etc/os-release".
@@ -54,18 +54,23 @@ the browser or with an app such as Extension Manager.
 A new version shows up there once it passes review. To get the newest one before that, see
 [Install from a release](./docs/installation.md#install-from-a-release).
 
-# See more
+## See more
 
-## Using
+### Using
 
 * [Configuring](./docs/configuring.md)
 
-## Troubleshooting
+### Troubleshooting
 
 * [Diagnosing issues](./docs/troubleshooting.md#diagnosing-issues)
 * [Known issues](./docs/troubleshooting.md#known-issues)
 
-# Thanks
+### Testing
+
+* [Test plans](./docs/testing.md)
+* [Run with mock displays](./docs/dev.md#mock-displays)
+
+## Thanks
 
 * [@hopsayer](https://github.com/hopsayer), for the inline sliders and much of what came with them
   in 1.4.0.
@@ -73,7 +78,7 @@ A new version shows up there once it passes review. To get the newest one before
   [contributors](https://github.com/samuelcecilio/multi-display-adjustment/graphs/contributors) for
   everyone whose code is in here.
 
-# License
+## License
 
 This extension is distributed under the terms of the GNU General Public License, version 2 or later.
 
