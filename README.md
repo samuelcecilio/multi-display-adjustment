@@ -1,14 +1,6 @@
 # Multi Display Adjustment GNOME shell extension
 
-> [!TIP]
-> Originally based on [display-adjustment](https://gitlab.com/w8jcik/display-adjustment) by Maciej Wójcik.
->
-> Details: [CHANGELOG.md](./CHANGELOG.md).
-
-Offers sliders in Quick Settings to control the brightness and contrast of external displays
-through DDC/CI, one set per display, under the display name that Settings shows. Moving a slider
-shows the level in the on-screen display of the screens it adjusts, as GNOME does for a laptop's
-own screen.
+Offers sliders in Quick Settings to control the brightness and contrast of external displays through DDC/CI, one set per display, under the display name that Settings shows. Moving a slider shows the level in the on-screen display of the screens it adjusts, as GNOME does for a laptop's own screen.
 
 ![Tile and inline modes](./docs/screenshot.png)
 
@@ -21,9 +13,9 @@ own screen.
 
 ### 1. Installation of ddcutil-service
 
-* **Arch Linux** — `yay -S ddcutil-service`
-* **openSUSE** — `sudo zypper install ddcutil-service`
-* **Debian 12 and 13, Ubuntu 24.04 to 26.04** — unofficial `amd64` packages by Maciej Wójcik:
+* [**Arch Linux**](https://aur.archlinux.org/packages/ddcutil-service) — `yay -S ddcutil-service`
+* [**openSUSE**](https://software.opensuse.org/package/ddcutil-service) — `sudo zypper install ddcutil-service`
+* [**Debian 12 and 13, Ubuntu 24.04 to 26.04**](https://gitlab.com/w8jcik/ddcutil-service.deb#latest) — unofficial `amd64` packages by Maciej Wójcik:
 
   ```bash
   . /etc/os-release # Read distro-ver variables for next command. Equal to "source /etc/os-release".
@@ -54,13 +46,13 @@ the browser or with an app such as Extension Manager.
 A new version shows up there once it passes review. To get the newest one before that, see
 [Install from a release](./docs/installation.md#install-from-a-release).
 
-# See more
+## See more
 
-## Using
+### Using
 
 * [Configuring](./docs/configuring.md)
 
-## Troubleshooting
+### Troubleshooting
 
 * [Diagnosing issues](./docs/troubleshooting.md#diagnosing-issues)
 * [Known issues](./docs/troubleshooting.md#known-issues)
@@ -70,18 +62,41 @@ A new version shows up there once it passes review. To get the newest one before
 * [Test plans](./docs/testing.md)
 * [Run with mock displays](./docs/dev.md#mock-displays)
 
-# Thanks
+### Contributing
 
-* [@hopsayer](https://github.com/hopsayer), for the inline sliders and much of what came with them
-  in 1.4.0.
-* Everyone who reports an issue or tries a change on their own displays. See the
-  [contributors](https://github.com/samuelcecilio/multi-display-adjustment/graphs/contributors) for
-  everyone whose code is in here.
+...is welcome:
 
-# License
+* Feedback on [extensions.gnome.org](https://extensions.gnome.org/extension/10707/multi-display-adjustment/)
+* Star this repo
+* Issues
+* Pull Requests
 
-This extension is distributed under the terms of the GNU General Public License, version 2 or later.
+#### Thanks
 
-Copyright of the original work belongs to Maciej Wójcik and the contributors to
-[w8jcik/display-adjustment](https://gitlab.com/w8jcik/display-adjustment). Modifications in this fork are
-copyright their respective authors and released under the same license. See [COPYING](./COPYING).
+* [@hopsayer](https://github.com/hopsayer), for the inline sliders and much of what came with them in 1.4.0.
+* Everyone who reports an issue or tries a change on their own displays. See the [contributors](https://github.com/samuelcecilio/multi-display-adjustment/graphs/contributors) for everyone whose code is in here.
+
+### Related projects
+
+* [ddcutil](https://github.com/rockowitz/ddcutil) - fundamental backend.
+* [ddcutil-service](https://github.com/digitaltrails/ddcutil-service) - D-Bus adaptation for OS integration and thus responsiveness.
+* [w8jcik/display-adjustment](https://gitlab.com/w8jcik/display-adjustment) - GNOME extension which this project was [originally based on](./CHANGELOG.md#origin-2026-04-07).
+
+## License
+
+Distributed under GPL-2.0-or-later, see [LICENSING](./docs/LICENSING.md) and [LICENSE](./LICENSE).
+
+---
+
+_Like it? ⭐ Star this repo!_
+
+<!--
+[![Github stars counter](https://img.shields.io/github/stars/samuelcecilio/multi-display-adjustment?style=social)](https://github.com/samuelcecilio/multi-display-adjustment)
+-->
+
+<!--
+[![Star History Chart](https://api.star-history.com/svg?repos=samuelcecilio/multi-display-adjustment&type=Date)](https://star-history.com/#samuelcecilio/multi-display-adjustment&Date)
+
+![GitHub all releases downloads counter](https://img.shields.io/github/downloads/samuelcecilio/multi-display-adjustment/total)
+
+-->
